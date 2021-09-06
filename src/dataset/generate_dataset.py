@@ -6,39 +6,45 @@ import os
 from PIL import Image
 import numpy as np
 
+# Code adapted from the following gist by Praateek Mahajan:
+# https://gist.github.com/praateekmahajan/b42ef0d295f528c986e2b3a0b31ec1fe
+
 
 def arr_from_img(im, mean=0, std=1):
-    '''
+    """
     Args:
         im: Image
-        shift: Mean to subtract
+        mean: Mean to subtract
         std: Standard Deviation to subtract
     Returns:
         Image in np.float32 format, in width height channel format. With values in range 0,1
         Shift means subtract by certain value. Could be used for mean subtraction.
-    '''
+    """
     width, height = im.size
     arr = im.getdata()
     c = int(np.product(arr.size) / (width * height))
 
-    return (np.asarray(arr, dtype=np.float32).reshape((height, width, c)).transpose(2, 1, 0) / 255. - mean) / std
+    return (np.asarray(arr, dtype=np.float32).reshape(
+        (height, width, c)).transpose(2, 1, 0) / 255. - mean) / std
 
 
-def get_image_from_array(X, index, mean=0, std=1):
-    '''
+def get_image_from_array(data_array, index, mean=0, std=1):
+    """
     Args:
-        X: Dataset of shape N x C x W x H
+        data_array: Dataset of shape N x C x W x H
         index: Index of image we want to fetch
         mean: Mean to add
         std: Standard Deviation to add
     Returns:
         Image with dimensions H x W x C or H x W if it's a single channel image
-    '''
-    ch, w, h = X.shape[1], X.shape[2], X.shape[3]
-    ret = (((X[index] + mean) * 255.) * std).reshape(ch, w, h).transpose(2, 1, 0).clip(0, 255).astype(np.uint8)
+    """
+    ch, w, h = data_array.shape[1], data_array.shape[2], data_array.shape[3]
+    ret = (((data_array[index] + mean) * 255.) * std).reshape(
+        ch, w, h).transpose(2, 1, 0).clip(0, 255).astype(np.uint8)
     if ch == 1:
         ret = ret.reshape(h, w)
     return ret
+
 
 # loads mnist from web on demand
 def load_dataset(training=True):
@@ -51,7 +57,6 @@ def load_dataset(training=True):
         print("Downloading %s" % filename)
         urlretrieve(source + filename, filename)
 
-    import gzip
     def load_mnist_images(filename):
         if not os.path.exists(filename):
             download(filename)
@@ -65,9 +70,9 @@ def load_dataset(training=True):
     return load_mnist_images('t10k-images-idx3-ubyte.gz')
 
 
-def generate_moving_mnist(training, shape=(64, 64), num_frames=30, num_sequences=2, original_size=28, nums_per_image=3,
-                          traj_per_image=2):
-    '''
+def generate_moving_mnist(training, shape=(64, 64), num_frames=30, num_sequences=2,
+                          original_size=28, nums_per_image=3, traj_per_image=2):
+    """
     Args:
         training: Boolean, used to decide if downloading/generating train set or test set
         shape: Shape we want for our moving images (new_width and new_height)
@@ -75,9 +80,11 @@ def generate_moving_mnist(training, shape=(64, 64), num_frames=30, num_sequences
         num_sequences: Number of movement/animations/gif to generate
         original_size: Real size of the images (eg: MNIST is 28x28)
         nums_per_image: Digits per movement/animation/gif.
+        traj_per_image: The number of different trajectories per movement/animation/gif.
     Returns:
-        Dataset of np.uint8 type with dimensions num_frames * num_sequences x 1 x new_width x new_height
-    '''
+        Dataset of np.uint8 type with dimensions
+        num_frames * num_sequences x 1 x new_width x new_height
+    """
     mnist = load_dataset(training)
     width, height = shape
 
@@ -96,26 +103,29 @@ def generate_moving_mnist(training, shape=(64, 64), num_frames=30, num_sequences
         speeds = np.random.randint(5, size=traj_per_image) + 2  # Scalars, one per digit
         speeds = np.insert(speeds, 0, speeds[0])
         # veloc is 2xnums_per_image (x and y component for velocity for each digit)
-        veloc = np.asarray([(speed * math.cos(direc), speed * math.sin(direc)) for direc, speed in zip(direcs, speeds)])
+        veloc = np.asarray([(speed * math.cos(direc), speed * math.sin(direc))
+                            for direc, speed in zip(direcs, speeds)])
 
         # Get a list containing three PIL images randomly sampled from the database
-        mnist_images = [Image.fromarray(get_image_from_array(mnist, r, mean=0)).resize((original_size, original_size),
-                                                                                       Image.ANTIALIAS) \
-                        for r in np.random.randint(0, mnist.shape[0], nums_per_image)]
+        mnist_images = [Image.fromarray(
+            get_image_from_array(mnist, r, mean=0)).resize(
+            (original_size, original_size), Image.ANTIALIAS)
+            for r in np.random.randint(0, mnist.shape[0], nums_per_image)]
         # Generate tuples of (x,y) i.e initial positions for nums_per_image (default : 2)
-        positions = np.asarray([(np.random.rand() * x_lim, np.random.rand() * y_lim) for _ in range(nums_per_image)])
+        positions = np.asarray([(np.random.rand() * x_lim, np.random.rand() * y_lim)
+                                for _ in range(nums_per_image)])
         print(positions)
 
-        # Generate new frames for the entire num_framesgth
+        # Generate the frames
         for frame_idx in range(num_frames):
 
             canvases = [Image.new('L', (width, height)) for _ in range(nums_per_image)]
             canvas = np.zeros((1, width, height), dtype=np.float32)
 
-            # In canv (i.e Image object) place the image at the respective positions
-            # Super impose both images on the canvas (i.e empty np array)
             for i, canv in enumerate(canvases):
+                # In canv (an Image object), place the image at the respective positions
                 canv.paste(mnist_images[i], tuple(positions[i].astype(int)))
+                # Superimpose both images on the canvas (i.e., empty np-array)
                 canvas += arr_from_img(canv, mean=0)
 
             # Get the next position by adding velocity
@@ -126,10 +136,13 @@ def generate_moving_mnist(training, shape=(64, 64), num_frames=30, num_sequences
             for i, pos in enumerate(next_pos):
                 for j, coord in enumerate(pos):
                     if coord < -2 or coord > lims[j] + 2:
-                        # One of list(veloc[i][:j]) or list(veloc[i][j + 1:]) always gives an empty list [].
+                        # One of list(veloc[i][:j]) or list(veloc[i][j + 1:])
+                        # always gives an empty list [].
                         # Whereas [-1 * veloc[i][j]] reverses that component.
                         # list(list + list) is just concatenating lists.
-                        veloc[i] = list(list(veloc[i][:j]) + [-1 * veloc[i][j]] + list(veloc[i][j + 1:]))
+                        veloc[i] = list(
+                            list(veloc[i][:j]) + [-1 * veloc[i][j]] + list(veloc[i][j + 1:])
+                        )
 
             # Make the permanent change to position by adding updated velocity
             positions = positions + veloc
@@ -140,11 +153,11 @@ def generate_moving_mnist(training, shape=(64, 64), num_frames=30, num_sequences
     return dataset
 
 
-def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_sequences=2, original_size=28,
-         nums_per_image=3):
-    dat = generate_moving_mnist(training, shape=(frame_size, frame_size), num_frames=num_frames, num_sequences=num_sequences, \
-                                original_size=original_size, nums_per_image=nums_per_image)
-    n = num_sequences * num_frames
+def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_sequences=2,
+         original_size=28, nums_per_image=3):
+    dat = generate_moving_mnist(training, shape=(frame_size, frame_size), num_frames=num_frames,
+                                num_sequences=num_sequences, original_size=original_size,
+                                nums_per_image=nums_per_image)
     if filetype == 'npz':
         np.savez(dest, dat)
     elif filetype == 'jpg':
