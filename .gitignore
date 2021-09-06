@@ -3,3 +3,7 @@
 
 # Data
 data/
+
+# Other
+.idea/
+.ipynb_checkpoints/
