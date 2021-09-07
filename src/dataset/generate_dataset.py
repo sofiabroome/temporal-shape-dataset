@@ -66,8 +66,8 @@ def load_dataset(training=True):
         return data / np.float32(255)
 
     if training:
-        return load_mnist_images('train-images-idx3-ubyte.gz')
-    return load_mnist_images('t10k-images-idx3-ubyte.gz')
+        return load_mnist_images('../../data/train-images-idx3-ubyte.gz')
+    return load_mnist_images('../../data/t10k-images-idx3-ubyte.gz')
 
 
 def generate_moving_mnist(training, shape=(64, 64), num_frames=30, num_sequences=2,
@@ -163,3 +163,11 @@ def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_seque
     elif filetype == 'jpg':
         for i in range(dat.shape[0]):
             Image.fromarray(get_image_from_array(dat, i, mean=0)).save(os.path.join(dest, '{}.jpg'.format(i)))
+
+
+if __name__ == '__main__':
+    dest = '../../data/test/'
+    if not os.path.isdir(dest):
+        os.mkdir(dest)
+    main(training=False, dest=dest)
+
