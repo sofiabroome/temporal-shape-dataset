@@ -4,6 +4,7 @@ import sys
 import os
 
 from PIL import Image
+import pandas as pd
 import numpy as np
 
 # Code adapted from the following gist by Praateek Mahajan:
@@ -47,7 +48,7 @@ def get_image_from_array(data_array, index, mean=0, std=1):
 
 
 # loads mnist from web on demand
-def load_dataset(training=True):
+def load_mnist(training=True):
     if sys.version_info[0] == 2:
         from urllib import urlretrieve
     else:
@@ -70,8 +71,8 @@ def load_dataset(training=True):
     return load_mnist_images('../../data/t10k-images-idx3-ubyte.gz')
 
 
-def generate_moving_mnist(training, shape=(64, 64), num_frames=30, num_sequences=2,
-                          original_size=28, nums_per_image=3, traj_per_image=2):
+def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num_sequences=2,
+                                    original_size=28, nums_per_image=3, traj_per_image=2):
     """
     Args:
         training: Boolean, used to decide if downloading/generating train set or test set
@@ -85,12 +86,13 @@ def generate_moving_mnist(training, shape=(64, 64), num_frames=30, num_sequences
         Dataset of np.uint8 type with dimensions
         num_frames * num_sequences x 1 x new_width x new_height
     """
-    mnist = load_dataset(training)
+    mnist = load_mnist(training)
     width, height = shape
+
+    labels = []
 
     # Get how many pixels can we move around a single image (to fit its width)
     lims = (x_lim, y_lim) = width - original_size, height - original_size
-    print(lims)
 
     # Create a dataset of shape of num_frames * num_sequences x 1 x new_width x new_height
     # Eg : 3000000 x 1 x 64 x 64
@@ -114,7 +116,10 @@ def generate_moving_mnist(training, shape=(64, 64), num_frames=30, num_sequences
         # Generate tuples of (x,y) i.e initial positions for nums_per_image (default : 2)
         positions = np.asarray([(np.random.rand() * x_lim, np.random.rand() * y_lim)
                                 for _ in range(nums_per_image)])
-        print(positions)
+        label_positions = [(x_ul, y_ul, x_ul + original_size, y_ul + original_size)
+                           for (x_ul, y_ul) in positions]
+        label_positions = np.asarray(label_positions).flatten().astype('int')
+        labels.append(label_positions)
 
         # Generate the frames
         for frame_idx in range(num_frames):
@@ -149,25 +154,40 @@ def generate_moving_mnist(training, shape=(64, 64), num_frames=30, num_sequences
 
             # Add the canvas to the dataset array
             dataset[img_idx * num_frames + frame_idx] = (canvas * 255).clip(0, 255).astype(np.uint8)
+            col_headers = ['ul_x_0', 'ul_y_0', 'lr_x_0', 'lr_y_0',
+                           'ul_x_1', 'ul_y_1', 'lr_x_1', 'lr_y_1',
+                           'ul_x_2', 'ul_y_2', 'lr_x_2', 'lr_y_2']
+            labels_df = pd.DataFrame(labels, columns=col_headers)
 
-    return dataset
+    return dataset, labels_df
 
 
 def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_sequences=2,
-         original_size=28, nums_per_image=3):
-    dat = generate_moving_mnist(training, shape=(frame_size, frame_size), num_frames=num_frames,
-                                num_sequences=num_sequences, original_size=original_size,
-                                nums_per_image=nums_per_image)
+         original_size=28, nums_per_image=3, save_gifs=True):
+    dat, labels_df = generate_temporal_shape_dataset(training, shape=(frame_size, frame_size), num_frames=num_frames,
+                                          num_sequences=num_sequences, original_size=original_size,
+                                          nums_per_image=nums_per_image)
+    labels_df.to_csv(os.path.join(dest, 'labels.csv'))
     if filetype == 'npz':
         np.savez(dest, dat)
     elif filetype == 'jpg':
         for i in range(dat.shape[0]):
             Image.fromarray(get_image_from_array(dat, i, mean=0)).save(os.path.join(dest, '{}.jpg'.format(i)))
+    if save_gifs:
+        for i in range(num_sequences):
+            start_index = i * num_frames
+            images_for_gif = [Image.fromarray(get_image_from_array(dat, j, mean=0)).convert('P') for j in
+                              range(start_index, start_index + num_frames)]
+            images_for_gif[0].save(os.path.join(dest, f'seq_{i}_start_{start_index}.gif'),
+                                   save_all=True, append_images=images_for_gif[1:],
+                                   include_color_table=False, optimize=False, duration=60)
 
 
 if __name__ == '__main__':
-    dest = '../../data/test/'
+    num_frames = 30
+    num_sequences = 100
+    dest = f'../../data/test_{num_sequences}seqs_{num_frames}_per_seq/'
     if not os.path.isdir(dest):
         os.mkdir(dest)
-    main(training=False, dest=dest)
+    main(training=False, dest=dest, num_frames=30, num_sequences=100)
 
