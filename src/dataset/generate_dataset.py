@@ -118,7 +118,7 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
                                 for _ in range(nums_per_image)])
         label_positions = [(x_ul, y_ul, x_ul + original_size, y_ul + original_size)
                            for (x_ul, y_ul) in positions]
-        label_positions = np.asarray(label_positions).flatten().astype('int')
+        label_positions = np.asarray(label_positions).flatten().astype(np.uint8)
         labels.append(label_positions)
 
         # Generate the frames
