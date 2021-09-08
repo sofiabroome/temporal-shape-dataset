@@ -2,6 +2,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from models.convlstm import StackedConvLSTMModel
 import pytorch_lightning as pl
 from pl_bolts.metrics.object_detection import iou as iou_metric
+from pl_bolts.losses.object_detection import iou_loss
 from torch import nn
 import torch
 
@@ -43,6 +44,7 @@ class ConvLSTMModule(pl.LightningModule):
     @staticmethod
     def loss_function(y_hat, y):
         criterion = nn.SmoothL1Loss()
+        # criterion = iou_loss
         loss = criterion(y_hat, y)
         return loss
 
@@ -74,6 +76,8 @@ class ConvLSTMModule(pl.LightningModule):
 
     def get_loss_iou(self, y_hat, y):
         loss = self.loss_function(y_hat, y)
+        # losses = self.loss_function(y_hat, y).diag()
+        # loss = sum(losses)/self.b
         ious = self.iou(y_hat, y).diag()
         iou = sum(ious)/self.b
         return loss, iou

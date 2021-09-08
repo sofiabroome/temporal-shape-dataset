@@ -192,8 +192,11 @@ def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_seque
 if __name__ == '__main__':
     num_frames = 20
     num_sequences = 100
-    dest = f'../../data/test_{num_sequences}seqs_{num_frames}_per_seq/'
+    train_test = 'train'
+
+    train = True if train_test == 'train' else False
+    dest = f'../../data/{train_test}_{num_sequences}seqs_{num_frames}_per_seq/'
     if not os.path.isdir(dest):
         os.mkdir(dest)
-    main(training=False, dest=dest, num_frames=num_frames, num_sequences=num_sequences, save_gifs=True)
+    main(training=train, dest=dest, num_frames=num_frames, num_sequences=num_sequences, save_gifs=True)
 
