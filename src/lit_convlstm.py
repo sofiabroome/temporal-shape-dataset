@@ -28,7 +28,7 @@ class ConvLSTMModule(pl.LightningModule):
             in_features=self.t * hidden_per_layer[-1] *
             int(self.h /(2**self.num_layers*conv_stride)) *
             int(self.w/(2**self.num_layers*conv_stride)),
-            out_features=48)
+            out_features=4)
         self.iou = iou_metric
         self.softmax = nn.Softmax(dim=1)
         self.save_hyperparameters()

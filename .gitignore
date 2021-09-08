@@ -9,6 +9,9 @@ __pycache__/
 # Data
 data/
 
+# Trained models
+trained_models/
+
 # Monitoring
 wandb/
 logs/

@@ -1,6 +1,6 @@
 {
     "model_name": "lit_3dconv",
-    "output_dir": "../../trained_models/",
+    "output_dir": "../trained_models/",
     "checkpoint_path": "-1",
 
     "data_folder": "../data/test_100seqs_30_per_seq/",
@@ -22,7 +22,7 @@
 
     "early_stopping_patience": 1000,
     "weight_decay": 0.00001,
-    "dropout": 0.5,
+    "dropout": 0,
 
     "input_spatial_size": 64
 }
