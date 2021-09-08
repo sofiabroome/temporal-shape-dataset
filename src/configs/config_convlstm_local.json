@@ -1,0 +1,32 @@
+{
+    "model_name": "lit_convlstm",
+    "output_dir": "../trained_models/",
+    "checkpoint_path": "-1",
+
+    "data_folder": "../data/test_100seqs_30_per_seq/",
+
+    "nb_train_samples": 75,
+    "nb_val_samples": 25,
+
+    "num_workers": 0,
+
+    "batch_size": 5,
+    "clip_size": 30,
+
+    "hidden_per_layer": [8, 8],
+    "kernel_size_per_layer": [5, 3],
+    "conv_stride": 1,
+
+    "optimizer": "SGD",
+    "lr": 0.01,
+    "reduce_lr": 0,
+    "last_lr": 0.00001,
+    "momentum": 0.9,
+    "num_epochs": 1000,
+
+    "early_stopping_patience": 1000,
+    "weight_decay": 0.00001,
+    "dropout": 0,
+
+    "input_spatial_size": 64
+}
