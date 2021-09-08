@@ -4,6 +4,7 @@ import sys
 import os
 
 from PIL import Image
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 
@@ -98,7 +99,8 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
     # Eg : 3000000 x 1 x 64 x 64
     dataset = np.empty((num_frames * num_sequences, 1, width, height), dtype=np.uint8)
 
-    for img_idx in range(num_sequences):
+    print('Generating sequences...')
+    for img_idx in tqdm(range(num_sequences)):
         # Randomly generate direction, speed and velocity for both images
         direcs = np.pi * (np.random.rand(traj_per_image) * 2 - 1)  # Scalars, one per digit
         direcs = np.insert(direcs, 0, direcs[0])
@@ -171,23 +173,27 @@ def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_seque
     if filetype == 'npz':
         np.savez(dest, dat)
     elif filetype == 'jpg':
-        for i in range(dat.shape[0]):
+        print('Saving jpgs...')
+        for i in tqdm(range(dat.shape[0])):
             Image.fromarray(get_image_from_array(dat, i, mean=0)).save(os.path.join(dest, '{}.jpg'.format(i)))
     if save_gifs:
-        for i in range(num_sequences):
+        print('Saving gifs...')
+        for i in tqdm(range(num_sequences)):
+            if i > 100:
+                break
             start_index = i * num_frames
             images_for_gif = [Image.fromarray(get_image_from_array(dat, j, mean=0)).convert('P') for j in
                               range(start_index, start_index + num_frames)]
             images_for_gif[0].save(os.path.join(dest, f'seq_{i}_start_{start_index}.gif'),
                                    save_all=True, append_images=images_for_gif[1:],
-                                   include_color_table=False, optimize=False, duration=60)
+                                   include_color_table=False, optimize=False, duration=120)
 
 
 if __name__ == '__main__':
-    num_frames = 30
+    num_frames = 20
     num_sequences = 100
     dest = f'../../data/test_{num_sequences}seqs_{num_frames}_per_seq/'
     if not os.path.isdir(dest):
         os.mkdir(dest)
-    main(training=False, dest=dest, num_frames=30, num_sequences=100)
+    main(training=False, dest=dest, num_frames=num_frames, num_sequences=num_sequences, save_gifs=True)
 
