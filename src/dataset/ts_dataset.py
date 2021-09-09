@@ -1,6 +1,7 @@
 import os
 import torch
 import pandas as pd
+from PIL import Image
 import torchvision as tv
 
 FRAMERATE = 1  # default value
@@ -8,35 +9,32 @@ FRAMERATE = 1  # default value
 
 class TemporalShapeDataset(torch.utils.data.Dataset):
 
-    def __init__(self, root, clip_size, is_val, transform_post=None,
-                is_test=False, seq_first=False):
+    def __init__(self, root, clip_size, is_val,
+                 transform_post=None, is_test=False, seq_first=False):
         self.root = root
         self.transform_post = transform_post
-
         self.clip_size = clip_size
         self.is_val = is_val
+        self.is_test = is_test
         self.seq_first = seq_first
         self.labels = pd.read_csv(os.path.join(self.root, 'labels.csv'))
 
     def __getitem__(self, index):
-        """
-        [!] FPS jittering doesn't work with AV dataloader as of now
-        """
 
         ground_truth_bb = self.labels.loc[index][-12:].values
         ground_truth_bb = torch.from_numpy(ground_truth_bb).float()
 
-        imgs = [tv.io.read_image(os.path.join(self.root, str(i)) + '.jpg').float()
-                for i in range(self.clip_size)]
+        images = [Image.open(os.path.join(self.root, str(frame_ind)) + '.jpg')
+                  for frame_ind in range(self.clip_size)]
 
         transform_norm = tv.transforms.Compose([
-            tv.transforms.Normalize([0.406], [0.225])
+            tv.transforms.ToTensor(),  # Scales to [0,1] and converts to tensor.
+            tv.transforms.Normalize([0.5], [0.5])
         ])
+        images = [transform_norm(img) for img in images]
 
-        imgs = [transform_norm(img) for img in imgs]
+        data = torch.stack(images)
 
-        # format data to torch
-        data = torch.stack(imgs).float()
         if not self.seq_first:
             data = data.permute(1, 0, 2, 3)
         return data, ground_truth_bb

@@ -23,7 +23,7 @@ class ThreeDCNNModule(ConvLSTMModule):
         self.linear = nn.Linear(
             in_features=16384,
             # in_features=int(self.t/2) * 512 * 7 * 7,
-            out_features=4)
+            out_features=12)
         self.iou = iou_metric
         self.softmax = nn.Softmax(dim=1)
         self.save_hyperparameters()

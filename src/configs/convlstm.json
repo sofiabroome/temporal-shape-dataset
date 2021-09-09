@@ -11,7 +11,7 @@
     "num_workers": 0,
 
     "batch_size": 64,
-    "clip_size": 30,
+    "clip_size": 20,
 
     "hidden_per_layer": [32, 32, 32, 32],
     "kernel_size_per_layer": [5, 3, 3, 3],
