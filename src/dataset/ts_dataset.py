@@ -26,8 +26,14 @@ class TemporalShapeDataset(torch.utils.data.Dataset):
         ground_truth_bb = self.labels.loc[index][-4:].values
         ground_truth_bb = torch.from_numpy(ground_truth_bb).float()
 
-        imgs = [tv.io.read_image(os.path.join(self.root, str(i)) + '.jpg')
+        imgs = [tv.io.read_image(os.path.join(self.root, str(i)) + '.jpg').float()
                 for i in range(self.clip_size)]
+
+        transform_norm = tv.transforms.Compose([
+            tv.transforms.Normalize([0.406], [0.225])
+        ])
+
+        imgs = [transform_norm(img) for img in imgs]
 
         # format data to torch
         data = torch.stack(imgs).float()
