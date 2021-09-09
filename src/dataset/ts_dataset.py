@@ -22,7 +22,7 @@ class TemporalShapeDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
 
         ground_truth_bb = self.labels.loc[index][-12:].values
-        ground_truth_bb = torch.from_numpy(ground_truth_bb).float()
+        ground_truth_bb = torch.as_tensor(ground_truth_bb, dtype=torch.float32)
 
         images = [Image.open(os.path.join(self.root, str(frame_ind)) + '.jpg')
                   for frame_ind in range(self.clip_size)]
