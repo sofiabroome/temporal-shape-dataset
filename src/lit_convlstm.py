@@ -29,7 +29,7 @@ class ConvLSTMModule(pl.LightningModule):
             in_features=self.t * hidden_per_layer[-1] *
             int(self.h /(2**self.num_layers*conv_stride)) *
             int(self.w/(2**self.num_layers*conv_stride)),
-            out_features=4)
+            out_features=12)
         self.iou = iou_metric
         self.softmax = nn.Softmax(dim=1)
         self.save_hyperparameters()
@@ -44,6 +44,7 @@ class ConvLSTMModule(pl.LightningModule):
     @staticmethod
     def loss_function(y_hat, y):
         criterion = nn.SmoothL1Loss()
+        # criterion = nn.MSELoss()
         # criterion = iou_loss
         loss = criterion(y_hat, y)
         return loss
