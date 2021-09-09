@@ -47,7 +47,7 @@ class VGGStyle3DCNN(nn.Module):
 
 
 if __name__ == "__main__":
-    input_tensor = torch.autograd.Variable(torch.rand(1, 1, 30, 64, 64))
+    input_tensor = torch.autograd.Variable(torch.rand(1, 1, 20, 64, 64))
     model = VGGStyle3DCNN()
     output = model(input_tensor)
     print(output.size())
