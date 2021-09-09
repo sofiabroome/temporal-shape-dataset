@@ -27,9 +27,12 @@ class TemporalShapeDataset(torch.utils.data.Dataset):
         images = [Image.open(os.path.join(self.root, str(frame_ind)) + '.jpg')
                   for frame_ind in range(self.clip_size)]
 
+        # transform_norm = tv.transforms.Compose([
+        #     tv.transforms.ToTensor(),  # Scales to [0,1] and converts to tensor.
+        #     tv.transforms.Normalize([0.5], [0.5])
+        # ])
         transform_norm = tv.transforms.Compose([
-            tv.transforms.ToTensor(),  # Scales to [0,1] and converts to tensor.
-            tv.transforms.Normalize([0.5], [0.5])
+            tv.transforms.ToTensor()  # Scales to [0,1] and converts to tensor.
         ])
         images = [transform_norm(img) for img in images]
 
