@@ -23,7 +23,7 @@ class TemporalShapeDataset(torch.utils.data.Dataset):
         [!] FPS jittering doesn't work with AV dataloader as of now
         """
 
-        ground_truth_bb = self.labels.loc[index][-4:].values
+        ground_truth_bb = self.labels.loc[index][-12:].values
         ground_truth_bb = torch.from_numpy(ground_truth_bb).float()
 
         imgs = [tv.io.read_image(os.path.join(self.root, str(i)) + '.jpg').float()
