@@ -25,10 +25,9 @@ class ConvLSTMModule(pl.LightningModule):
             self.c, hidden_per_layer, kernel_size_per_layer, conv_stride)
         self.flatten = nn.Flatten(start_dim=1, end_dim=-1)
         self.dropout = nn.Dropout(p=dropout)
+        self.encoder_out_dim = self.t * hidden_per_layer[-1] * int(self.h /(2**self.num_layers*conv_stride)) * int(self.w/(2**self.num_layers*conv_stride))
         self.linear = nn.Linear(
-            in_features=self.t * hidden_per_layer[-1] *
-            int(self.h /(2**self.num_layers*conv_stride)) *
-            int(self.w/(2**self.num_layers*conv_stride)),
+            in_features=self.encoder_out_dim,
             out_features=12)
         self.iou = iou_metric
         self.softmax = nn.Softmax(dim=1)

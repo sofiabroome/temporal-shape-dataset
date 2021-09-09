@@ -3,15 +3,15 @@
     "output_dir": "../trained_models/",
     "checkpoint_path": "-1",
 
-    "data_folder": "../data/test_100seqs_30_per_seq/",
+    "data_folder": "../data/train_10000seqs_20_per_seq/",
 
-    "nb_train_samples": 75,
-    "nb_val_samples": 25,
+    "nb_train_samples": 9000,
+    "nb_val_samples": 1000,
 
     "num_workers": 0,
 
-    "batch_size": 5,
-    "clip_size": 30,
+    "batch_size": 64,
+    "clip_size": 20,
 
     "optimizer": "Adam",
     "lr": 0.01,

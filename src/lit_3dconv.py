@@ -20,8 +20,10 @@ class ThreeDCNNModule(ConvLSTMModule):
         self.threed_cnn_encoder = VGGStyle3DCNN()
         self.flatten = nn.Flatten(start_dim=1, end_dim=-1)
         self.dropout = nn.Dropout(p=dropout)
+        self.encoder_out_dim = 10240
+        self.batch_norm = nn.BatchNorm1d(self.encoder_out_dim)
         self.linear = nn.Linear(
-            in_features=16384,
+            in_features=self.encoder_out_dim,
             # in_features=int(self.t/2) * 512 * 7 * 7,
             out_features=12)
         self.iou = iou_metric
@@ -32,6 +34,7 @@ class ThreeDCNNModule(ConvLSTMModule):
         x = self.threed_cnn_encoder(x)
         x = self.flatten(x)
         x = self.dropout(x)
+        x = self.batch_norm(x)
         x = self.linear(x)
         return x
 
