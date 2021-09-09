@@ -30,7 +30,7 @@ class ConvLSTMModule(pl.LightningModule):
             in_features=self.encoder_out_dim,
             out_features=12)
         self.iou = iou_metric
-        self.softmax = nn.Softmax(dim=1)
+        self.sigmoid = nn.Sigmoid()
         self.save_hyperparameters()
 
     def forward(self, x) -> torch.Tensor:
@@ -38,6 +38,7 @@ class ConvLSTMModule(pl.LightningModule):
         x = self.flatten(x)
         x = self.dropout(x)
         x = self.linear(x)
+        x = self.sigmoid(x) * self.h
         return x
 
     @staticmethod

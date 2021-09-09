@@ -27,7 +27,7 @@ class ThreeDCNNModule(ConvLSTMModule):
             # in_features=int(self.t/2) * 512 * 7 * 7,
             out_features=12)
         self.iou = iou_metric
-        self.softmax = nn.Softmax(dim=1)
+        self.sigmoid = nn.Sigmoid()
         self.save_hyperparameters()
 
     def forward(self, x) -> torch.Tensor:
@@ -36,6 +36,7 @@ class ThreeDCNNModule(ConvLSTMModule):
         x = self.dropout(x)
         x = self.batch_norm(x)
         x = self.linear(x)
+        x = self.sigmoid(x) * self.h
         return x
 
     def configure_optimizers(self):
