@@ -12,6 +12,7 @@
 
     "batch_size": 64,
     "clip_size": 20,
+    "nb_labels": 4,
 
     "optimizer": "Adam",
     "lr": 0.01,

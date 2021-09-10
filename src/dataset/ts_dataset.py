@@ -9,7 +9,7 @@ FRAMERATE = 1  # default value
 
 class TemporalShapeDataset(torch.utils.data.Dataset):
 
-    def __init__(self, root, clip_size, is_val,
+    def __init__(self, root, clip_size, is_val, nb_labels,
                  transform_post=None, is_test=False, seq_first=False):
         self.root = root
         self.transform_post = transform_post
@@ -18,10 +18,11 @@ class TemporalShapeDataset(torch.utils.data.Dataset):
         self.is_test = is_test
         self.seq_first = seq_first
         self.labels = pd.read_csv(os.path.join(self.root, 'labels.csv'))
+        self.nb_labels = nb_labels
 
     def __getitem__(self, index):
 
-        ground_truth_bb = self.labels.loc[index][-12:].values
+        ground_truth_bb = self.labels.loc[index][-self.nb_labels:].values
         ground_truth_bb = torch.as_tensor(ground_truth_bb, dtype=torch.float32)
 
         images = [Image.open(os.path.join(self.root, str(frame_ind)) + '.jpg')
