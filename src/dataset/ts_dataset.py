@@ -21,15 +21,18 @@ class TemporalShapeDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
 
-        ground_truth_bb = self.labels.loc[index][-12:].values
-        ground_truth_bb = torch.as_tensor(ground_truth_bb, dtype=torch.float32)
+        ground_truth = self.labels.loc[index].values
+        ground_truth = torch.as_tensor(ground_truth, dtype=torch.float32)
 
         images = [Image.open(os.path.join(self.root, str(frame_ind)) + '.jpg')
                   for frame_ind in range(self.clip_size)]
 
+        # transform_norm = tv.transforms.Compose([
+        #     tv.transforms.ToTensor(),  # Scales to [0,1] and converts to tensor.
+        #     tv.transforms.Normalize([0.5], [0.5])
+        # ])
         transform_norm = tv.transforms.Compose([
-            tv.transforms.ToTensor(),  # Scales to [0,1] and converts to tensor.
-            tv.transforms.Normalize([0.5], [0.5])
+            tv.transforms.ToTensor()  # Scales to [0,1] and converts to tensor.
         ])
         images = [transform_norm(img) for img in images]
 
@@ -37,7 +40,7 @@ class TemporalShapeDataset(torch.utils.data.Dataset):
 
         if not self.seq_first:
             data = data.permute(1, 0, 2, 3)
-        return data, ground_truth_bb
+        return data, ground_truth
 
     def __len__(self):
         return len(self.labels)
