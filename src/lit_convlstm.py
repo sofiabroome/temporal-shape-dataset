@@ -96,7 +96,7 @@ class ConvLSTMModule(pl.LightningModule):
                 optimizer, 'max', factor=0.5, patience=2, verbose=True)
             return {'optimizer': optimizer,
                     'lr_scheduler': scheduler,
-                    'monitor': 'val_iou'}
+                    'monitor': 'val_acc'}
         else:
             return optimizer
 

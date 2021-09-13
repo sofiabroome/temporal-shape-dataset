@@ -161,8 +161,8 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
             # Add the canvas to the dataset array
             dataset[img_idx * num_frames + frame_idx] = (canvas * 255).clip(0, 255).astype(np.uint8)
 
-            col_headers = ['class']
-            labels_df = pd.DataFrame(labels, columns=col_headers)
+    col_headers = ['class']
+    labels_df = pd.DataFrame(labels, columns=col_headers)
 
     return dataset, labels_df
 
@@ -193,8 +193,8 @@ def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_seque
 
 
 if __name__ == '__main__':
-    num_frames = 30
-    num_sequences = 10
+    num_frames = 20
+    num_sequences = 10000
     train_test = 'train'
 
     train = True if train_test == 'train' else False

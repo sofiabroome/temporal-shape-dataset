@@ -3,25 +3,25 @@
     "output_dir": "../trained_models/",
     "checkpoint_path": "-1",
 
-    "data_folder": "../data/classification_train_10seqs_30_per_seq/",
+    "data_folder": "../data/classification_train_1000seqs_30_per_seq/",
 
-    "nb_train_samples": 9,
-    "nb_val_samples": 1,
+    "nb_train_samples": 900,
+    "nb_val_samples": 100,
 
     "num_workers": 0,
 
-    "batch_size": 5,
-    "clip_size": 20,
+    "batch_size": 64,
+    "clip_size": 30,
     "nb_labels": 3,
 
     "optimizer": "Adam",
-    "lr": 0.01,
+    "lr": 0.001,
     "reduce_lr": 0,
     "last_lr": 0.00001,
     "momentum": 0.9,
-    "num_epochs": 1000,
+    "num_epochs": 100,
 
-    "early_stopping_patience": 1000,
+    "early_stopping_patience": 100,
     "weight_decay": 0.00001,
     "dropout": 0,
 

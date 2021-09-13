@@ -18,15 +18,22 @@ class VGGStyle3DCNN(nn.Module):
     def __init__(self):
         super(VGGStyle3DCNN, self).__init__()
         self.block1 = nn.Sequential(
-            nn.Conv3d(1, 8, kernel_size=(3, 5, 5), stride=(1, 2, 2), dilation=(1, 1, 1), padding=(1, 2, 2)),
-            nn.BatchNorm3d(8),
+            nn.Conv3d(1, 32, kernel_size=(3, 5, 5), stride=(1, 2, 2), dilation=(1, 1, 1), padding=(1, 2, 2)),
+            nn.BatchNorm3d(32),
             nn.ReLU(inplace=True),
             nn.Dropout3d(p=0.2),
         )
 
         self.block2 = nn.Sequential(
-            nn.Conv3d(8, 8, kernel_size=(3, 3, 3), stride=2, dilation=(1, 1, 1), padding=(1, 1, 1)),
-            nn.BatchNorm3d(8),
+            nn.Conv3d(32, 64, kernel_size=(3, 3, 3), stride=2, dilation=(1, 1, 1), padding=(1, 1, 1)),
+            nn.BatchNorm3d(64),
+            nn.ReLU(inplace=True),
+            nn.AvgPool3d(kernel_size=(3, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0)),
+            nn.Dropout3d(p=0.2),
+        )
+        self.block3 = nn.Sequential(
+            nn.Conv3d(64, 128, kernel_size=(3, 3, 3), stride=2, dilation=(1, 1, 1), padding=(1, 1, 1)),
+            nn.BatchNorm3d(128),
             nn.ReLU(inplace=True),
             nn.AvgPool3d(kernel_size=(3, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0)),
             nn.Dropout3d(p=0.2),
@@ -39,6 +46,7 @@ class VGGStyle3DCNN(nn.Module):
         x = self.block1(x)
         # print(x.size())
         x = self.block2(x)
+        x = self.block3(x)
         # print(x.size())
         # averaging features in time dimension
         # x = x.mean(-1).mean(-1).mean(-1)
