@@ -22,8 +22,8 @@ class TemporalShapeDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
 
-        ground_truth = self.labels.loc[index][-self.nb_labels:].values
-        ground_truth = torch.as_tensor(ground_truth, dtype=torch.float32)
+        ground_truth = self.labels.loc[index]['class']
+        ground_truth = torch.as_tensor(ground_truth, dtype=torch.int64)
 
         images = [Image.open(os.path.join(self.root, str(frame_ind)) + '.jpg')
                   for frame_ind in range(self.clip_size)]

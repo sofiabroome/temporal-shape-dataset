@@ -2,7 +2,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from models.cnn3d import VGGStyle3DCNN
 from lit_convlstm import ConvLSTMModule
 from torch import nn
-from pl_bolts.metrics.object_detection import iou as iou_metric
+import torchmetrics
 import torch
 
 
@@ -21,14 +21,15 @@ class ThreeDCNNModule(ConvLSTMModule):
         self.threed_cnn_encoder = VGGStyle3DCNN()
         self.flatten = nn.Flatten(start_dim=1, end_dim=-1)
         self.dropout = nn.Dropout(p=dropout)
-        self.encoder_out_dim = 16384
+        self.encoder_out_dim = 10240
         self.batch_norm = nn.BatchNorm1d(self.encoder_out_dim)
         self.linear = nn.Linear(
             in_features=self.encoder_out_dim,
             # in_features=int(self.t/2) * 512 * 7 * 7,
             out_features=self.out_features)
-        self.iou = iou_metric
-        self.sigmoid = nn.Sigmoid()
+        self.accuracy = torchmetrics.Accuracy()
+        self.top5_accuracy = torchmetrics.Accuracy(top_k=2)
+        self.softmax = nn.Softmax(dim=1)
         self.save_hyperparameters()
 
     def forward(self, x) -> torch.Tensor:
@@ -37,7 +38,6 @@ class ThreeDCNNModule(ConvLSTMModule):
         x = self.dropout(x)
         x = self.batch_norm(x)
         x = self.linear(x)
-        # x = self.sigmoid(x) * self.h
         return x
 
     def configure_optimizers(self):

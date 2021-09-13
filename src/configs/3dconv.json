@@ -3,16 +3,16 @@
     "output_dir": "../trained_models/",
     "checkpoint_path": "-1",
 
-    "data_folder": "../data/classification_train_10000seqs_20_per_seq/",
+    "data_folder": "../data/classification_train_10seqs_30_per_seq/",
 
-    "nb_train_samples": 9000,
-    "nb_val_samples": 1000,
+    "nb_train_samples": 9,
+    "nb_val_samples": 1,
 
     "num_workers": 0,
 
     "batch_size": 5,
     "clip_size": 20,
-    "nb_labels": 4,
+    "nb_labels": 3,
 
     "optimizer": "Adam",
     "lr": 0.01,
