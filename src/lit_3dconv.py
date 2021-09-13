@@ -7,11 +7,12 @@ import torch
 
 
 class ThreeDCNNModule(ConvLSTMModule):
-    def __init__(self, input_size, optimizer, lr, reduce_lr, momentum, weight_decay, dropout):
+    def __init__(self, input_size, optimizer, nb_labels, lr, reduce_lr, momentum, weight_decay, dropout):
         super(ConvLSTMModule, self).__init__()
 
         self.b, self.t, self.c, self.h, self.w = input_size
         self.seq_first = False
+        self.out_features = nb_labels
         self.optimizer = optimizer
         self.lr = lr
         self.reduce_lr = reduce_lr
@@ -20,12 +21,12 @@ class ThreeDCNNModule(ConvLSTMModule):
         self.threed_cnn_encoder = VGGStyle3DCNN()
         self.flatten = nn.Flatten(start_dim=1, end_dim=-1)
         self.dropout = nn.Dropout(p=dropout)
-        self.encoder_out_dim = 10240
+        self.encoder_out_dim = 16384
         self.batch_norm = nn.BatchNorm1d(self.encoder_out_dim)
         self.linear = nn.Linear(
             in_features=self.encoder_out_dim,
             # in_features=int(self.t/2) * 512 * 7 * 7,
-            out_features=12)
+            out_features=self.out_features)
         self.iou = iou_metric
         self.sigmoid = nn.Sigmoid()
         self.save_hyperparameters()
@@ -36,7 +37,7 @@ class ThreeDCNNModule(ConvLSTMModule):
         x = self.dropout(x)
         x = self.batch_norm(x)
         x = self.linear(x)
-        x = self.sigmoid(x) * self.h
+        # x = self.sigmoid(x) * self.h
         return x
 
     def configure_optimizers(self):

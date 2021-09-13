@@ -20,6 +20,7 @@ class TemporalShapeDataModule(pl.LightningDataModule):
                 root=self.data_dir,
                 clip_size=self.config['clip_size'],
                 is_val=False,
+                nb_labels=self.config['nb_labels'],
                 transform_post=None,
                 is_test=True,
                 seq_first=self.seq_first
@@ -34,6 +35,7 @@ class TemporalShapeDataModule(pl.LightningDataModule):
                 root=self.data_dir,
                 clip_size=self.config['clip_size'],
                 is_val=True,
+                nb_labels=self.config['nb_labels'],
                 transform_post=None,
                 is_test=True,
                 seq_first=self.seq_first

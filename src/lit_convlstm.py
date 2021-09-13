@@ -2,13 +2,13 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from models.convlstm import StackedConvLSTMModel
 import pytorch_lightning as pl
 from pl_bolts.metrics.object_detection import iou as iou_metric
-from pl_bolts.losses.object_detection import iou_loss
+from pl_bolts.losses.object_detection import iou_loss, giou_loss
 from torch import nn
 import torch
 
 
 class ConvLSTMModule(pl.LightningModule):
-    def __init__(self, input_size, optimizer, hidden_per_layer,
+    def __init__(self, input_size, optimizer, hidden_per_layer, nb_labels,
                  kernel_size_per_layer, conv_stride, lr, reduce_lr,
                  momentum, weight_decay, dropout):
         super(ConvLSTMModule, self).__init__()
@@ -16,6 +16,7 @@ class ConvLSTMModule(pl.LightningModule):
         self.b, self.t, self.c, self.h, self.w = input_size
         self.seq_first = True
         self.num_layers = len(hidden_per_layer)
+        self.out_features = nb_labels
         self.optimizer = optimizer
         self.lr = lr
         self.reduce_lr = reduce_lr
@@ -28,7 +29,7 @@ class ConvLSTMModule(pl.LightningModule):
         self.encoder_out_dim = self.t * hidden_per_layer[-1] * int(self.h /(2**self.num_layers*conv_stride)) * int(self.w/(2**self.num_layers*conv_stride))
         self.linear = nn.Linear(
             in_features=self.encoder_out_dim,
-            out_features=12)
+            out_features=self.out_features)
         self.iou = iou_metric
         self.sigmoid = nn.Sigmoid()
         self.save_hyperparameters()
@@ -43,9 +44,9 @@ class ConvLSTMModule(pl.LightningModule):
 
     @staticmethod
     def loss_function(y_hat, y):
-        criterion = nn.SmoothL1Loss()
+        # criterion = nn.SmoothL1Loss(reduction='sum')
         # criterion = nn.MSELoss()
-        # criterion = iou_loss
+        criterion = giou_loss
         loss = criterion(y_hat, y)
         return loss
 
@@ -76,9 +77,9 @@ class ConvLSTMModule(pl.LightningModule):
         return {'test_loss': loss}
 
     def get_loss_iou(self, y_hat, y):
-        loss = self.loss_function(y_hat, y)
-        # losses = self.loss_function(y_hat, y).diag()
-        # loss = sum(losses)/self.b
+        # loss = self.loss_function(y_hat, y)
+        losses = self.loss_function(y_hat, y).diag()
+        loss = sum(losses)/self.b
         ious = self.iou(y_hat, y).diag()
         iou = sum(ious)/self.b
         return loss, iou
