@@ -56,12 +56,12 @@ def main():
                                 momentum=config['momentum'], weight_decay=config['weight_decay'],
                                 dropout=config['dropout'])
 
-    checkpoint_callback = ModelCheckpoint(monitor='val_iou', mode='max',
+    checkpoint_callback = ModelCheckpoint(monitor='val_acc', mode='max',
                                           verbose=True,
-                                          filename='{epoch}-{val_loss:.2f}-{val_iou:.4f}')
+                                          filename='{epoch}-{val_loss:.2f}-{val_acc:.4f}')
 
     early_stop_callback = EarlyStopping(
-        monitor='val_iou',
+        monitor='val_acc',
         min_delta=0.00,
         patience=config['early_stopping_patience'],
         verbose=False,

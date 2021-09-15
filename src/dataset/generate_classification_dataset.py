@@ -190,7 +190,7 @@ def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_seque
 
 if __name__ == '__main__':
     num_frames = 20
-    num_sequences = 100
+    num_sequences = 10000
     train_test = 'train'
 
     train = True if train_test == 'train' else False

@@ -10,4 +10,4 @@ nvidia-smi
 module load Anaconda/2021.05-nsc1
 conda activate /proj/berzelius_pilot/x_sofbr/xdata
 cd /proj/berzelius_pilot/users/x_sofbr/temporal-shape-dataset/src/dataset/
-python generate_dataset.py
+python generate_classification_dataset.py
