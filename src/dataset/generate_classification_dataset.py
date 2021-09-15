@@ -24,21 +24,16 @@ class TemporalShape(Enum):
 
 
 def generate_circle(time_steps, r):
-
     angles = np.linspace(0, 2*np.pi, time_steps)
     velocities = [np.array([r*np.cos(phi), r*np.sin(phi)])
                   for phi in angles]
-    # velocities = np.asarray(velocities)
-
     return velocities
 
 
 def generate_spiral(time_steps, max_radius):
-    t_array = np.linspace(0, 10, time_steps)
+    t_array = np.linspace(0, max_radius, time_steps)
     velocities = [np.array([t*np.cos(t), t*np.sin(t)])
                   for t in t_array]
-    # velocities = np.asarray(velocities)
-
     return velocities
 
 
@@ -49,7 +44,6 @@ def generate_line(time_steps):
     speed = 1  # Scalars, one per digit
     # veloc is 2xnums_per_image (x and y component for velocity for each digit)
     veloc = np.asarray((speed * math.cos(direc), speed * math.sin(direc)))
-    # velocities = np.tile(veloc, (time_steps, 1))
     velocities = [veloc for i in range(time_steps)]
     return velocities
 
@@ -59,14 +53,14 @@ def get_limits(lims, symbol_width, max_radius, shape=None):
     low = 2 * max_radius + extra_margin
     high = lims[1] - symbol_width
     if shape == 'SPIRAL':
-        low = 2 * max_radius # + extra_margin
+        low = 2 * max_radius  # + extra_margin
         high = lims[1] - symbol_width - max_radius
     return low, high
 
 
 def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num_sequences=2,
-                                    original_size=14, nums_per_image=1, traj_per_image=2,
-                                    max_radius=2):
+                                    original_size=14, nums_per_image=1,
+                                    max_radius=2, object_mode='dot'):
     """
     Args:
         training: Boolean, used to decide if downloading/generating train set or test set
@@ -75,7 +69,6 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
         num_sequences: Number of movement/animations/gif to generate
         original_size: Real size of the images (eg: MNIST is 28x28)
         nums_per_image: Digits per movement/animation/gif.
-        traj_per_image: The number of different trajectories per movement/animation/gif.
     Returns:
         Dataset of np.uint8 type with dimensions
         num_frames * num_sequences x 1 x new_width x new_height
@@ -84,7 +77,8 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
     width, height = shape
 
     labels = []
-
+    if object_mode == 'dot':
+        original_size = 1
     # Get how many pixels can we move around a single image (to fit its width)
     lims = (x_lim, y_lim) = width - original_size, height - original_size
     low, high = get_limits(lims, original_size, max_radius)
@@ -106,7 +100,7 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
             velocities = generate_circle(time_steps=num_frames, r=max_radius)
 
         if TemporalShape(label).name == 'SPIRAL':
-            velocities = generate_spiral(time_steps=num_frames, max_radius=max_radius)
+            velocities = generate_spiral(time_steps=num_frames, max_radius=10)
             low, high = get_limits(lims, original_size, max_radius=10, shape='SPIRAL')
             print('adjusted: ')
             print(low, high, '\n')
@@ -120,8 +114,6 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
             (original_size, original_size), Image.ANTIALIAS)
             for r in np.random.randint(0, mnist.shape[0], nums_per_image)]
         # Generate tuples of (x,y) i.e initial positions for nums_per_image (default : 2)
-        # positions = np.asarray((np.random.rand() * lims[0], np.random.rand() * lims[1]))
-        # import ipdb; ipdb.set_trace()
         positions = np.asarray((np.random.randint(low, high),
                                 np.random.randint(low, high)))
         print(positions, '\n')
@@ -134,26 +126,29 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
 
             for i, canv in enumerate(canvases):
                 # In canv (an Image object), place the image at the respective positions
-                # canv.paste(mnist_images[i], tuple(positions[i].astype(int)))
-                canv.paste(mnist_images[i], tuple(positions.astype(int)))
-                # Superimpose both images on the canvas (i.e., empty np-array)
-                canvas += arr_from_img(canv, mean=0)
+                if object_mode == 'mnist':
+                    canv.paste(mnist_images[i], tuple(positions.astype(int)))
+                    # Superimpose both images on the canvas (i.e., empty np-array)
+                    canvas += arr_from_img(canv, mean=0)
+                if object_mode == 'dot':
+                    canvas[0, int(positions[0]), int(positions[1])] = 255
 
             # Get the next position by adding velocity
             next_pos = positions + velocities[frame_idx]
+            print('next pos: ', next_pos, '\n')
 
             # Iterate over velocity and see if we hit the wall
             # If we do then change the  (change direction)
+            # if coord < -2 or coord > lims[j] + 2:
             for j, coord in enumerate(next_pos):
-                # if coord < -2 or coord > lims[j] + 2:
-                if coord < -2 or coord > lims[j] + 2:
+                if coord < 0 or coord > lims[1]:
                     # One of list(veloc[i][:j]) or list(veloc[i][j + 1:])
                     # always gives an empty list [].
                     # Whereas [-1 * veloc[i][j]] reverses that component.
                     # list(list + list) is just concatenating lists.
                     future_velocities = [list(velocities[ind][:j]) + [-1 * velocities[ind][j]] + list(velocities[ind][j + 1:])
-                        for ind in range(frame_idx+1, num_frames)]
-                    velocities[frame_idx+1:] = future_velocities
+                        for ind in range(frame_idx, num_frames)]
+                    velocities[frame_idx:] = future_velocities
 
             # Make the permanent change to position by adding updated velocity
             positions = positions + velocities[frame_idx]
@@ -161,17 +156,18 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
             # Add the canvas to the dataset array
             dataset[img_idx * num_frames + frame_idx] = (canvas * 255).clip(0, 255).astype(np.uint8)
 
-            col_headers = ['class']
-            labels_df = pd.DataFrame(labels, columns=col_headers)
+    col_headers = ['class']
+    labels_df = pd.DataFrame(labels, columns=col_headers)
 
     return dataset, labels_df
 
 
 def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_sequences=2,
          original_size=14, nums_per_image=1, save_gifs=True):
-    dat, labels_df = generate_temporal_shape_dataset(training, shape=(frame_size, frame_size), num_frames=num_frames,
-                                          num_sequences=num_sequences, original_size=original_size,
-                                          nums_per_image=nums_per_image)
+    dat, labels_df = generate_temporal_shape_dataset(
+        training, shape=(frame_size, frame_size), num_frames=num_frames,
+        num_sequences=num_sequences, original_size=original_size,
+        nums_per_image=nums_per_image)
     labels_df.to_csv(os.path.join(dest, 'labels.csv'))
     if filetype == 'npz':
         np.savez(dest, dat)
@@ -193,8 +189,8 @@ def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_seque
 
 
 if __name__ == '__main__':
-    num_frames = 30
-    num_sequences = 10
+    num_frames = 20
+    num_sequences = 100
     train_test = 'train'
 
     train = True if train_test == 'train' else False
