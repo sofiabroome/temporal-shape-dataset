@@ -168,7 +168,7 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
         if save_gifs:
             print('Saving gifs...')
             if gif_counter > 100:
-                break
+                continue
             start_index = img_idx * num_frames
             images_for_gif = [Image.fromarray(get_image_from_array(sequence, j, mean=0)).convert('P') for j in
                               range(num_frames)]
@@ -194,7 +194,7 @@ def main(training, dest, frame_size=64, num_frames=30, num_sequences=2,
 
 if __name__ == '__main__':
     num_frames = 20
-    num_sequences = 100000
+    num_sequences = 10000
     train_test = 'train'
     object_mode = 'dot'
 
