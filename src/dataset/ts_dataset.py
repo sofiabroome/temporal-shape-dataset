@@ -25,7 +25,9 @@ class TemporalShapeDataset(torch.utils.data.Dataset):
         ground_truth = self.labels.loc[index]['class']
         ground_truth = torch.as_tensor(ground_truth, dtype=torch.int64)
 
-        images = [Image.open(os.path.join(self.root, str(frame_ind)) + '.jpg')
+        start_jpg_index = index * self.clip_size
+
+        images = [Image.open(os.path.join(self.root, str(start_jpg_index + frame_ind)) + '.jpg')
                   for frame_ind in range(self.clip_size)]
 
         # transform_norm = tv.transforms.Compose([
