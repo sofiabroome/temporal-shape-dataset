@@ -30,6 +30,13 @@ def generate_circle(time_steps, r):
     return velocities
 
 
+def generate_arc(time_steps, r):
+    angles = np.linspace(0, np.pi, time_steps)
+    velocities = [np.array([r*np.cos(phi), r*np.sin(phi)])
+                  for phi in angles]
+    return velocities
+
+
 def generate_spiral(time_steps, max_radius):
     t_array = np.linspace(0, max_radius, time_steps)
     velocities = [np.array([t*np.cos(t), t*np.sin(t)])
@@ -45,6 +52,19 @@ def generate_line(time_steps):
     # veloc is 2xnums_per_image (x and y component for velocity for each digit)
     veloc = np.asarray((speed * math.cos(direc), speed * math.sin(direc)))
     velocities = [veloc for i in range(time_steps)]
+    return velocities
+
+
+def generate_rectangle(time_steps):
+    nb_sides = 4
+    direcs = np.asarray([np.pi/2, np.pi, -np.pi/2, 0])
+    speed = 1.5  # Scalars, one per digit
+    # veloc is 2xnums_per_image (x and y component for velocity for each digit)
+    velocs = [np.asarray((speed * math.cos(direc), speed * math.sin(direc))) for direc in direcs]
+    interval_length = int(time_steps/nb_sides)
+    velocities = []
+    for i in range(nb_sides):
+        velocities.extend([velocs[i] for j in range(interval_length)])
     return velocities
 
 
@@ -96,12 +116,15 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
         sequence = np.empty((num_frames, 1, width, height), dtype=np.uint8)
 
         # label = np.random.randint(len(TemporalShape))
-        label = np.random.randint(3)
+        label = np.random.randint(5)
         # label = 1
         labels.append(label)
 
         if TemporalShape(label).name == 'CIRCLE':
             velocities = generate_circle(time_steps=num_frames, r=max_radius)
+
+        if TemporalShape(label).name == 'ARC':
+            velocities = generate_arc(time_steps=num_frames, r=max_radius)
 
         if TemporalShape(label).name == 'SPIRAL':
             velocities = generate_spiral(time_steps=num_frames, max_radius=10)
@@ -111,6 +134,9 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
 
         if TemporalShape(label).name == 'LINE':
             velocities = generate_line(time_steps=num_frames)
+
+        if TemporalShape(label).name == 'RECTANGLE':
+            velocities = generate_rectangle(time_steps=num_frames)
 
         if object_mode == 'mnist':
             # Get a list containing three PIL images randomly sampled from the database
@@ -194,7 +220,7 @@ def main(training, dest, frame_size=64, num_frames=30, num_sequences=2,
 
 if __name__ == '__main__':
     num_frames = 20
-    num_sequences = 10000
+    num_sequences = 100
     train_test = 'train'
     object_mode = 'dot'
 
