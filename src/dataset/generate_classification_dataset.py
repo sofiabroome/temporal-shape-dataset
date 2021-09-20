@@ -60,7 +60,7 @@ def get_limits(lims, symbol_width, max_radius, shape=None):
 
 def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num_sequences=2,
                                     original_size=14, nums_per_image=1,
-                                    max_radius=2, object_mode='dot'):
+                                    max_radius=2, object_mode='dot', save_gifs=True):
     """
     Args:
         training: Boolean, used to decide if downloading/generating train set or test set
@@ -73,24 +73,28 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
         Dataset of np.uint8 type with dimensions
         num_frames * num_sequences x 1 x new_width x new_height
     """
-    mnist = load_mnist(training)
     width, height = shape
 
     labels = []
     if object_mode == 'dot':
-        original_size = 1
+        original_size = 5
+    if object_mode == 'mnist':
+        mnist = load_mnist(training)
+
     # Get how many pixels can we move around a single image (to fit its width)
     lims = (x_lim, y_lim) = width - original_size, height - original_size
     low, high = get_limits(lims, original_size, max_radius)
     print(low, high)
     print('lims: ', lims, '\n')
 
-    # Create a dataset of shape of num_frames * num_sequences x 1 x new_width x new_height
-    # Eg : 3000000 x 1 x 64 x 64
-    dataset = np.empty((num_frames * num_sequences, 1, width, height), dtype=np.uint8)
+    gif_counter = 0
 
     print('Generating sequences...')
     for img_idx in tqdm(range(num_sequences)):
+        # Create an array of shape num_sequences x 1 x new_width x new_height
+        # Eg : 3000000 x 1 x 64 x 64
+        sequence = np.empty((num_frames, 1, width, height), dtype=np.uint8)
+
         # label = np.random.randint(len(TemporalShape))
         label = np.random.randint(3)
         # label = 1
@@ -108,11 +112,12 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
         if TemporalShape(label).name == 'LINE':
             velocities = generate_line(time_steps=num_frames)
 
-        # Get a list containing three PIL images randomly sampled from the database
-        mnist_images = [Image.fromarray(
-            get_image_from_array(mnist, r, mean=0)).resize(
-            (original_size, original_size), Image.ANTIALIAS)
-            for r in np.random.randint(0, mnist.shape[0], nums_per_image)]
+        if object_mode == 'mnist':
+            # Get a list containing three PIL images randomly sampled from the database
+            mnist_images = [Image.fromarray(get_image_from_array(mnist, r, mean=0)).resize(
+                (original_size, original_size), Image.ANTIALIAS)
+                for r in np.random.randint(0, mnist.shape[0], nums_per_image)]
+
         # Generate tuples of (x,y) i.e initial positions for nums_per_image (default : 2)
         positions = np.asarray((np.random.randint(low, high),
                                 np.random.randint(low, high)))
@@ -131,7 +136,9 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
                     # Superimpose both images on the canvas (i.e., empty np-array)
                     canvas += arr_from_img(canv, mean=0)
                 if object_mode == 'dot':
-                    canvas[0, int(positions[0]), int(positions[1])] = 255
+                    x_pos = int(positions[0])
+                    y_pos = int(positions[1])
+                    canvas[0, x_pos-2:x_pos+2, y_pos-2:y_pos+2] = 255
 
             # Get the next position by adding velocity
             next_pos = positions + velocities[frame_idx]
@@ -154,38 +161,35 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
             positions = positions + velocities[frame_idx]
 
             # Add the canvas to the dataset array
-            dataset[img_idx * num_frames + frame_idx] = (canvas * 255).clip(0, 255).astype(np.uint8)
+            sequence[frame_idx] = (canvas * 255).clip(0, 255).astype(np.uint8)
+            jpg_index = img_idx * num_frames + frame_idx
+            Image.fromarray(
+                get_image_from_array(sequence, frame_idx, mean=0)).save(os.path.join(dest, '{}.jpg'.format(jpg_index)))
+        if save_gifs:
+            print('Saving gifs...')
+            if gif_counter > 100:
+                break
+            start_index = img_idx * num_frames
+            images_for_gif = [Image.fromarray(get_image_from_array(sequence, j, mean=0)).convert('P') for j in
+                              range(num_frames)]
+            images_for_gif[0].save(os.path.join(dest, f'seq_{gif_counter}_start_{start_index}.gif'),
+                                   save_all=True, append_images=images_for_gif[1:],
+                                   include_color_table=False, optimize=False, duration=80)
+            gif_counter += 1
 
     col_headers = ['class']
     labels_df = pd.DataFrame(labels, columns=col_headers)
 
-    return dataset, labels_df
+    return labels_df
 
 
-def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_sequences=2,
+def main(training, dest, frame_size=64, num_frames=30, num_sequences=2,
          original_size=14, nums_per_image=1, object_mode='dot', save_gifs=True):
-    dat, labels_df = generate_temporal_shape_dataset(
+    labels_df = generate_temporal_shape_dataset(
         training, shape=(frame_size, frame_size), num_frames=num_frames,
         num_sequences=num_sequences, original_size=original_size,
-        nums_per_image=nums_per_image, object_mode=object_mode)
+        nums_per_image=nums_per_image, object_mode=object_mode, save_gifs=save_gifs)
     labels_df.to_csv(os.path.join(dest, 'labels.csv'))
-    if filetype == 'npz':
-        np.savez(dest, dat)
-    elif filetype == 'jpg':
-        print('Saving jpgs...')
-        for i in tqdm(range(dat.shape[0])):
-            Image.fromarray(get_image_from_array(dat, i, mean=0)).save(os.path.join(dest, '{}.jpg'.format(i)))
-    if save_gifs:
-        print('Saving gifs...')
-        for i in tqdm(range(num_sequences)):
-            if i > 100:
-                break
-            start_index = i * num_frames
-            images_for_gif = [Image.fromarray(get_image_from_array(dat, j, mean=0)).convert('P') for j in
-                              range(start_index, start_index + num_frames)]
-            images_for_gif[0].save(os.path.join(dest, f'seq_{i}_start_{start_index}.gif'),
-                                   save_all=True, append_images=images_for_gif[1:],
-                                   include_color_table=False, optimize=False, duration=80)
 
 
 if __name__ == '__main__':
