@@ -78,7 +78,7 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
 
     labels = []
     if object_mode == 'dot':
-        original_size = 1
+        original_size = 5
     # Get how many pixels can we move around a single image (to fit its width)
     lims = (x_lim, y_lim) = width - original_size, height - original_size
     low, high = get_limits(lims, original_size, max_radius)
@@ -131,11 +131,13 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
                     # Superimpose both images on the canvas (i.e., empty np-array)
                     canvas += arr_from_img(canv, mean=0)
                 if object_mode == 'dot':
-                    canvas[0, int(positions[0]), int(positions[1])] = 255
+                    x_pos = int(positions[0])
+                    y_pos = int(positions[1])
+                    canvas[0, x_pos-2:x_pos+2, y_pos-2:y_pos+2] = 255
 
             # Get the next position by adding velocity
             next_pos = positions + velocities[frame_idx]
-            print('next pos: ', next_pos, '\n')
+            # print('next pos: ', next_pos, '\n')
 
             # Iterate over velocity and see if we hit the wall
             # If we do then change the  (change direction)
@@ -190,7 +192,7 @@ def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_seque
 
 if __name__ == '__main__':
     num_frames = 20
-    num_sequences = 10000
+    num_sequences = 10
     train_test = 'train'
 
     train = True if train_test == 'train' else False
