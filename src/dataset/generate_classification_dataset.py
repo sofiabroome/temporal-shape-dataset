@@ -102,8 +102,8 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
         if TemporalShape(label).name == 'SPIRAL':
             velocities = generate_spiral(time_steps=num_frames, max_radius=10)
             low, high = get_limits(lims, original_size, max_radius=10, shape='SPIRAL')
-            print('adjusted: ')
-            print(low, high, '\n')
+            # print('adjusted: ')
+            # print(low, high, '\n')
 
         if TemporalShape(label).name == 'LINE':
             velocities = generate_line(time_steps=num_frames)
@@ -116,7 +116,7 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
         # Generate tuples of (x,y) i.e initial positions for nums_per_image (default : 2)
         positions = np.asarray((np.random.randint(low, high),
                                 np.random.randint(low, high)))
-        print(positions, '\n')
+        # print(positions, '\n')
 
         # Generate the frames
         for frame_idx in range(num_frames):
@@ -135,7 +135,7 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
 
             # Get the next position by adding velocity
             next_pos = positions + velocities[frame_idx]
-            print('next pos: ', next_pos, '\n')
+            # print('next pos: ', next_pos, '\n')
 
             # Iterate over velocity and see if we hit the wall
             # If we do then change the  (change direction)
@@ -163,11 +163,11 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
 
 
 def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_sequences=2,
-         original_size=14, nums_per_image=1, save_gifs=True):
+         original_size=14, nums_per_image=1, object_mode='dot', save_gifs=True):
     dat, labels_df = generate_temporal_shape_dataset(
         training, shape=(frame_size, frame_size), num_frames=num_frames,
         num_sequences=num_sequences, original_size=original_size,
-        nums_per_image=nums_per_image)
+        nums_per_image=nums_per_image, object_mode=object_mode)
     labels_df.to_csv(os.path.join(dest, 'labels.csv'))
     if filetype == 'npz':
         np.savez(dest, dat)
@@ -190,12 +190,13 @@ def main(training, dest, filetype='jpg', frame_size=64, num_frames=30, num_seque
 
 if __name__ == '__main__':
     num_frames = 20
-    num_sequences = 10000
+    num_sequences = 100000
     train_test = 'train'
+    object_mode = 'dot'
 
     train = True if train_test == 'train' else False
-    dest = f'../../data/classification_{train_test}_{num_sequences}seqs_{num_frames}_per_seq/'
+    dest = f'../../data/classification_{object_mode}_{train_test}_{num_sequences}seqs_{num_frames}_per_seq/'
     if not os.path.isdir(dest):
         os.mkdir(dest)
-    main(training=train, dest=dest, num_frames=num_frames, num_sequences=num_sequences, save_gifs=True)
+    main(training=train, dest=dest, num_frames=num_frames, num_sequences=num_sequences, object_mode=object_mode, save_gifs=True)
 
