@@ -116,7 +116,7 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
         sequence = np.empty((num_frames, 1, width, height), dtype=np.uint8)
 
         # label = np.random.randint(len(TemporalShape))
-        label = np.random.randint(5)
+        label = np.random.randint(num_classes)
         # label = 1
         labels.append(label)
 
@@ -220,12 +220,13 @@ def main(training, dest, frame_size=64, num_frames=30, num_sequences=2,
 
 if __name__ == '__main__':
     num_frames = 20
-    num_sequences = 100
+    num_sequences = 100000
     train_test = 'train'
     object_mode = 'dot'
+    num_classes = 5
 
     train = True if train_test == 'train' else False
-    dest = f'../../data/classification_{object_mode}_{train_test}_{num_sequences}seqs_{num_frames}_per_seq/'
+    dest = f'../../data/classification_{object_mode}_{num_classes}classes_{train_test}_{num_sequences}seqs_{num_frames}_per_seq/'
     if not os.path.isdir(dest):
         os.mkdir(dest)
     main(training=train, dest=dest, num_frames=num_frames, num_sequences=num_sequences, object_mode=object_mode, save_gifs=True)
