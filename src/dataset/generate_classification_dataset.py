@@ -73,12 +73,14 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
         Dataset of np.uint8 type with dimensions
         num_frames * num_sequences x 1 x new_width x new_height
     """
-    mnist = load_mnist(training)
     width, height = shape
 
     labels = []
     if object_mode == 'dot':
         original_size = 5
+    if object_mode == 'mnist':
+        mnist = load_mnist(training)
+
     # Get how many pixels can we move around a single image (to fit its width)
     lims = (x_lim, y_lim) = width - original_size, height - original_size
     low, high = get_limits(lims, original_size, max_radius)
@@ -108,11 +110,12 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
         if TemporalShape(label).name == 'LINE':
             velocities = generate_line(time_steps=num_frames)
 
-        # Get a list containing three PIL images randomly sampled from the database
-        mnist_images = [Image.fromarray(
-            get_image_from_array(mnist, r, mean=0)).resize(
-            (original_size, original_size), Image.ANTIALIAS)
-            for r in np.random.randint(0, mnist.shape[0], nums_per_image)]
+        if object_mode == 'mnist':
+            # Get a list containing three PIL images randomly sampled from the database
+            mnist_images = [Image.fromarray( get_image_from_array(mnist, r, mean=0)).resize(
+                (original_size, original_size), Image.ANTIALIAS)
+                for r in np.random.randint(0, mnist.shape[0], nums_per_image)]
+
         # Generate tuples of (x,y) i.e initial positions for nums_per_image (default : 2)
         positions = np.asarray((np.random.randint(low, high),
                                 np.random.randint(low, high)))
