@@ -71,17 +71,17 @@ class Conv3dBlock(nn.Module):
         self.bn = nn.BatchNorm3d(hidden_dim)
         self.relu = nn.ReLU(inplace=True)
         if pooling == 'max':
-            self.pool = nn.MaxPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0))
+            self.pool = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
         if pooling == 'avg':
-            self.pool = nn.AvgPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0))
+            self.pool = nn.AvgPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
         self.dropout3d = nn.Dropout3d(p=dropout)
 
     def forward(self, x):
 
         x = self.conv3d(x)
+        x = self.pool(x)
         x = self.bn(x)
         x = self.relu(x)
-        x = self.pool(x)
         x = self.dropout3d(x)
         return x
 
