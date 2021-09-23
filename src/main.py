@@ -58,7 +58,8 @@ def main():
                                 momentum=config['momentum'], weight_decay=config['weight_decay'],
                                 dropout=config['dropout'])
 
-    config['nb_trainable_params'] = count_parameters(model)
+
+    config['nb_encoder_params'], config['nb_trainable_params'] = count_parameters(model)
 
     checkpoint_callback = ModelCheckpoint(monitor='val_acc', mode='max',
                                           verbose=True,
