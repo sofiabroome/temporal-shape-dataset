@@ -46,17 +46,22 @@ def main():
                                conv_stride=config['conv_stride'],
                                lr=config['lr'], reduce_lr=config['reduce_lr'],
                                momentum=config['momentum'], weight_decay=config['weight_decay'],
-                               dropout=config['dropout'],
+                               dropout_classifier=config['dropout_classifier'],
                                return_sequence=config['return_sequence'])
 
     if config['model_name'] == 'lit_3dconv':
         model = ThreeDCNNModule(input_size=(config['batch_size'], config['clip_size'], 1,
                                 config['input_spatial_size'], config['input_spatial_size']),
                                 optimizer=config['optimizer'],
+                                hidden_per_layer=config['hidden_per_layer'],
+                                kernel_size_per_layer=config['kernel_size_per_layer'],
+                                conv_stride=config['conv_stride'],
+                                dropout_encoder=config['dropout_encoder'],
+                                pooling=config['pooling'],
                                 nb_labels=config['nb_labels'],
                                 lr=config['lr'], reduce_lr=config['reduce_lr'],
                                 momentum=config['momentum'], weight_decay=config['weight_decay'],
-                                dropout=config['dropout'])
+                                dropout_classifier=config['dropout_classifier'])
 
 
     config['nb_encoder_params'], config['nb_trainable_params'] = count_parameters(model)

@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 import pytorch_lightning as pl
-from models.model_utils import count_parameters
 
 # The implementation is adapted from
 # https://github.com/ndrplz/ConvLSTM_pytorch/blob/master/convlstm.py
@@ -202,4 +201,3 @@ if __name__ == '__main__':
     pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print('pytorch_total_params, only trainable', pytorch_total_params)
 
-    count_parameters(model)

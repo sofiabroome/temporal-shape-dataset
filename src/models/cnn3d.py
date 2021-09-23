@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
 
-from models.model_utils import count_parameters
-
 
 class VGGStyle3DCNN(nn.Module):
     """
@@ -17,48 +15,82 @@ class VGGStyle3DCNN(nn.Module):
     - Returns: a (batch_size, 512) sized tensor
     """
 
-    def __init__(self):
+    def __init__(self, input_channels, hidden_per_layer, kernel_size_per_layer, conv_stride, pooling, dropout):
         super(VGGStyle3DCNN, self).__init__()
-        self.block1 = nn.Sequential(
-            nn.Conv3d(1, 16, kernel_size=(7, 7, 7), stride=(1, 2, 2), dilation=(1, 1, 1), padding=(1, 2, 2)),
-            nn.BatchNorm3d(16),
-            nn.ReLU(inplace=True),
-            nn.Dropout3d(p=0),
-        )
+        self.hidden_per_layer = hidden_per_layer
+        self.input_channels = input_channels
+        self.conv_stride = conv_stride
+        self.pooling = pooling
+        self.dropout = dropout
+        self.num_layers = len(hidden_per_layer)
+        self.blocks = []
 
-        self.block2 = nn.Sequential(
-            nn.Conv3d(16, 16, kernel_size=(3, 3, 3), stride=2, dilation=(1, 1, 1), padding=(1, 1, 1)),
-            nn.BatchNorm3d(16),
-            nn.ReLU(inplace=True),
-            nn.AvgPool3d(kernel_size=(3, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0)),
-            nn.Dropout3d(p=0),
-        )
-        self.block3 = nn.Sequential(
-            nn.Conv3d(16, 64, kernel_size=(3, 3, 3), stride=2, dilation=(1, 1, 1), padding=(1, 1, 1)),
-            nn.BatchNorm3d(64),
-            nn.ReLU(inplace=True),
-            nn.AvgPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0)),
-            nn.Dropout3d(p=0),
-        )
+        assert(len(hidden_per_layer) == len(kernel_size_per_layer))
+
+        for i, nb_channels in enumerate(self.hidden_per_layer):
+            cur_input_dim = self.input_channels if i == 0 else self.hidden_per_layer[i - 1]
+            self.blocks.append(Conv3dBlock(cur_input_dim, hidden_dim=hidden_per_layer[i],
+                                             kernel_size=kernel_size_per_layer[i],
+                                             stride=self.conv_stride, pooling=self.pooling[i], dropout=self.dropout))
+        self.conv3d_blocks = nn.ModuleList(self.blocks)
+        # self.block1 = nn.Sequential(
+        #     nn.Conv3d(1, 2, kernel_size=(3, 3, 3), stride=(1, 2, 2), dilation=(1, 1, 1), padding=(1, 2, 2)),
+        #     nn.BatchNorm3d(2),
+        #     nn.ReLU(inplace=True),
+        #     nn.Dropout3d(p=0),
+        # )
+
+        # self.block2 = nn.Sequential(
+        #     nn.Conv3d(2, 2, kernel_size=(3, 3, 3), stride=2, dilation=(1, 1, 1), padding=(1, 1, 1)),
+        #     nn.BatchNorm3d(2),
+        #     nn.ReLU(inplace=True),
+        #     nn.AvgPool3d(kernel_size=(3, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0)),
+        #     nn.Dropout3d(p=0),
+        # )
+        # self.block3 = nn.Sequential(
+        #     nn.Conv3d(2, 2, kernel_size=(3, 3, 3), stride=2, dilation=(1, 1, 1), padding=(1, 1, 1)),
+        #     nn.BatchNorm3d(2),
+        #     nn.ReLU(inplace=True),
+        #     nn.AvgPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0)),
+        #     nn.Dropout3d(p=0),
+        # )
 
     def forward(self, x):
-        # get convolution column features
-
-        # print(x.size())
-        x = self.block1(x)
-        # print(x.size())
-        x = self.block2(x)
-        x = self.block3(x)
-        # print(x.size())
-        # averaging features in time dimension
-        # x = x.mean(-1).mean(-1).mean(-1)
+        
+        for layer_idx in range(self.num_layers):
+            x = self.conv3d_blocks[layer_idx](x)
 
         return x
 
 
+class Conv3dBlock(nn.Module):
+
+    def __init__(self, input_dim, hidden_dim, kernel_size, stride, pooling, dropout):
+        super().__init__()
+        self.conv3d = nn.Conv3d(input_dim, hidden_dim, kernel_size=(kernel_size, kernel_size, kernel_size), stride=stride, dilation=(1, 1, 1), padding=(1, 1, 1))
+        self.bn = nn.BatchNorm3d(hidden_dim)
+        self.relu = nn.ReLU(inplace=True)
+        if pooling == 'max':
+            self.pool = nn.MaxPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0))
+        if pooling == 'avg':
+            self.pool = nn.AvgPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0))
+        self.dropout3d = nn.Dropout3d(p=dropout)
+
+    def forward(self, x):
+
+        x = self.conv3d(x)
+        x = self.bn(x)
+        x = self.relu(x)
+        x = self.pool(x)
+        x = self.dropout3d(x)
+        return x
+
+
 if __name__ == "__main__":
-    input_tensor = torch.autograd.Variable(torch.rand(1, 1, 20, 64, 64))
-    model = VGGStyle3DCNN()
+    input_tensor = torch.autograd.Variable(torch.rand(64, 1, 20, 64, 64))
+    model = VGGStyle3DCNN(input_channels=1, hidden_per_layer=[2, 2, 2],
+        kernel_size_per_layer=[3, 3, 3],
+        conv_stride=1)
     output = model(input_tensor)
     print(output.size(), '\n')
 
@@ -68,4 +100,3 @@ if __name__ == "__main__":
     pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print('pytorch_total_params, only trainable', pytorch_total_params)
 
-    count_parameters(model)
