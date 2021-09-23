@@ -219,10 +219,14 @@ def main(training, dest, frame_size=64, num_frames=30, num_sequences=2,
 
 if __name__ == '__main__':
     num_frames = 20
-    num_sequences = 10
+    num_sequences = 10000
     train_test = 'train'
+
     object_mode = 'dot'
     symbol_size = 2
+    # object_mode = 'mnist'
+    # symbol_size = 14
+
     num_classes = 5
 
     train = True if train_test == 'train' else False
