@@ -28,6 +28,7 @@ class ThreeDCNNModule(ConvLSTMModule):
             out_features=self.out_features)
         self.accuracy = torchmetrics.Accuracy()
         self.top5_accuracy = torchmetrics.Accuracy(top_k=2)
+        self.confmat = torchmetrics.ConfusionMatrix(num_classes=nb_labels)
         self.softmax = nn.Softmax(dim=1)
         self.save_hyperparameters()
 

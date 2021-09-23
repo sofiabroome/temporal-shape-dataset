@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 import pytorch_lightning as pl
+from models.model_utils import count_parameters
 
 # The implementation is adapted from
 # https://github.com/ndrplz/ConvLSTM_pytorch/blob/master/convlstm.py
@@ -8,7 +9,7 @@ import pytorch_lightning as pl
 
 class StackedConvLSTMModel(nn.Module):
     def __init__(self, input_channels, hidden_per_layer, kernel_size_per_layer,
-                 conv_stride, return_all_layers=False, batch_first=True):
+                 conv_stride, return_all_layers=False, return_sequence=True, batch_first=True):
         super(StackedConvLSTMModel, self).__init__()
 
         self.hidden_per_layer = hidden_per_layer
@@ -16,6 +17,7 @@ class StackedConvLSTMModel(nn.Module):
         self.conv_stride = conv_stride
         self.num_layers = len(hidden_per_layer)
         self.return_all_layers = return_all_layers
+        self.return_sequence = return_sequence
         self.batch_first = batch_first
         self.blocks = []
 
@@ -70,6 +72,9 @@ class StackedConvLSTMModel(nn.Module):
 
         if not self.return_all_layers:
             layer_output_list = layer_output_list[-1]
+
+        if not self.return_sequence:
+            layer_output_list = layer_output_list[:,-1,:]
 
         return layer_output_list
 
@@ -184,9 +189,17 @@ class ConvLSTMCell(nn.Module):
 
 if __name__ == '__main__':
 
-    conv_lstm_model = StackedConvLSTMModel(input_channels=1, hidden_per_layer=[8, 8],
-                                           kernel_size_per_layer=[5, 5],
-                                           conv_stride=1)
-    output_list = conv_lstm_model(torch.rand(1, 30, 1, 64, 64))
+    model = StackedConvLSTMModel(input_channels=1, hidden_per_layer=[2, 2, 2],
+                                 return_sequence=True, kernel_size_per_layer=[3, 3, 3],
+                                 conv_stride=1)
+    output_list = model(torch.rand(1, 20, 1, 64, 64))
     print(len(output_list))
-    print(output_list[0].size())
+    print(output_list[0].size(), '\n')
+
+    pytorch_total_params = sum(p.numel() for p in model.parameters())
+    print('pytorch_total_params', pytorch_total_params)
+
+    pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print('pytorch_total_params, only trainable', pytorch_total_params)
+
+    count_parameters(model)

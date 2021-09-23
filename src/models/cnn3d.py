@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from models.model_utils import count_parameters
+
 
 class VGGStyle3DCNN(nn.Module):
     """
@@ -25,14 +27,14 @@ class VGGStyle3DCNN(nn.Module):
         )
 
         self.block2 = nn.Sequential(
-            nn.Conv3d(16, 32, kernel_size=(3, 3, 3), stride=2, dilation=(1, 1, 1), padding=(1, 1, 1)),
-            nn.BatchNorm3d(32),
+            nn.Conv3d(16, 16, kernel_size=(3, 3, 3), stride=2, dilation=(1, 1, 1), padding=(1, 1, 1)),
+            nn.BatchNorm3d(16),
             nn.ReLU(inplace=True),
             nn.AvgPool3d(kernel_size=(3, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0)),
             nn.Dropout3d(p=0),
         )
         self.block3 = nn.Sequential(
-            nn.Conv3d(32, 64, kernel_size=(3, 3, 3), stride=2, dilation=(1, 1, 1), padding=(1, 1, 1)),
+            nn.Conv3d(16, 64, kernel_size=(3, 3, 3), stride=2, dilation=(1, 1, 1), padding=(1, 1, 1)),
             nn.BatchNorm3d(64),
             nn.ReLU(inplace=True),
             nn.AvgPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1), padding=(1, 0, 0)),
@@ -58,4 +60,12 @@ if __name__ == "__main__":
     input_tensor = torch.autograd.Variable(torch.rand(1, 1, 20, 64, 64))
     model = VGGStyle3DCNN()
     output = model(input_tensor)
-    print(output.size())
+    print(output.size(), '\n')
+
+    pytorch_total_params = sum(p.numel() for p in model.parameters())
+    print('pytorch_total_params', pytorch_total_params)
+
+    pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print('pytorch_total_params, only trainable', pytorch_total_params)
+
+    count_parameters(model)
