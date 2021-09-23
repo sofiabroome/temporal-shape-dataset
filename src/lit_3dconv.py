@@ -19,13 +19,17 @@ class ThreeDCNNModule(ConvLSTMModule):
         self.momentum = momentum
         self.weight_decay = weight_decay
         self.threed_cnn_encoder = VGGStyle3DCNN()
+
+        input_tensor = torch.autograd.Variable(torch.rand(1, self.c, self.t, self.h, self.w)) 
+        sample_output = self.threed_cnn_encoder(input_tensor)
+        self.encoder_out_dim = torch.prod(torch.tensor(sample_output.shape[1:]))
+
         self.flatten = nn.Flatten(start_dim=1, end_dim=-1)
         self.dropout = nn.Dropout(p=dropout)
-        self.encoder_out_dim = 8192
         self.linear = nn.Linear(
             in_features=self.encoder_out_dim,
-            # in_features=int(self.t/2) * 512 * 7 * 7,
             out_features=self.out_features)
+
         self.accuracy = torchmetrics.Accuracy()
         self.top5_accuracy = torchmetrics.Accuracy(top_k=2)
         self.confmat = torchmetrics.ConfusionMatrix(num_classes=nb_labels)
