@@ -88,14 +88,16 @@ def main():
     if trainer.gpus is not None:
         config['num_workers'] = int(trainer.gpus/8 * 128)
 
-    train_dm = TemporalShapeDataModule(data_dir=config['data_folder'], config=config, seq_first=model.seq_first)
-    trainer.fit(model, train_dm)
-
     test_dm = TemporalShapeDataModule(data_dir=config['test_data_folder'], config=config, seq_first=model.seq_first)
-    trainer.test(datamodule=test_dm)
-    # trainer.test(datamodule=dm, model=model,
-    #              ckpt_path=config['ckpt_path'])
 
+    if config['inference_from_checkpoint_only']:
+        model_from_checkpoint = ConvLSTMModule.load_from_checkpoint(config['ckpt_path'])
+        trainer.test(datamodule=test_dm, model=model_from_checkpoint)
+
+    else:
+        train_dm = TemporalShapeDataModule(data_dir=config['data_folder'], config=config, seq_first=model.seq_first)
+        trainer.fit(model, train_dm)
+        trainer.test(datamodule=test_dm)
 
 if __name__ == '__main__':
     main()
