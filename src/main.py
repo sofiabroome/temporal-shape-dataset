@@ -9,6 +9,7 @@ from pytorch_lightning import seed_everything
 import utils
 import argparse
 from dataset.lit_data_module import TemporalShapeDataModule
+from models.model_utils import count_parameters
 from lit_convlstm import ConvLSTMModule
 from lit_3dconv import ThreeDCNNModule
 
@@ -56,6 +57,8 @@ def main():
                                 momentum=config['momentum'], weight_decay=config['weight_decay'],
                                 dropout=config['dropout'])
 
+    config['nb_trainable_params'] = count_parameters(model)
+
     checkpoint_callback = ModelCheckpoint(monitor='val_acc', mode='max',
                                           verbose=True,
                                           filename='{epoch}-{val_loss:.2f}-{val_acc:.4f}')
@@ -84,10 +87,11 @@ def main():
     if trainer.gpus is not None:
         config['num_workers'] = int(trainer.gpus/8 * 128)
 
-    dm = TemporalShapeDataModule(data_dir=config['data_folder'], config=config, seq_first=model.seq_first)
-    trainer.fit(model, dm)
+    train_dm = TemporalShapeDataModule(data_dir=config['data_folder'], config=config, seq_first=model.seq_first)
+    trainer.fit(model, train_dm)
 
-    # trainer.test(model, datamodule=dm)
+    test_dm = TemporalShapeDataModule(data_dir=config['test_data_folder'], config=config, seq_first=model.seq_first)
+    trainer.test(datamodule=test_dm)
     # trainer.test(datamodule=dm, model=model,
     #              ckpt_path=config['ckpt_path'])
 
