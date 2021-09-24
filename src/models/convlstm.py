@@ -52,19 +52,17 @@ class StackedConvLSTMModel(nn.Module):
         # Implement stateful ConvLSTM
         if initial_hidden_states is not None:
             raise NotImplementedError()
-        else:
-            # Since the init is done in forward. Can send image size here
-            initial_hidden_states = self._init_hidden(batch_size=b,
-                                                      image_size=(h, w))
 
         layer_output_list = []
 
         cur_layer_input = input_tensor
 
         for layer_idx in range(self.num_layers):
+            initial_hidden_states = self._init_hidden(
+                batch_size=b, cur_image_size=cur_layer_input.shape[-2:], layer_index=layer_idx)
             layer_output = self.conv_lstm_blocks[layer_idx](
                 cur_layer_input=cur_layer_input,
-                initial_hidden_states=initial_hidden_states[layer_idx])
+                initial_hidden_states=initial_hidden_states)
 
             cur_layer_input = layer_output
             layer_output_list.append(layer_output)
@@ -77,14 +75,8 @@ class StackedConvLSTMModel(nn.Module):
 
         return layer_output_list
 
-    def _init_hidden(self, batch_size, image_size):
-        init_states = []
-        for i in range(self.num_layers):
-            inv_scaling_factor = 2**i  # Down-sampling resulting from max-pooling
-            cur_image_size = (int(image_size[0]/inv_scaling_factor), int(image_size[1]/inv_scaling_factor))
-            if i != 0:
-                cur_image_size = (int(cur_image_size[0]/self.conv_stride), int(cur_image_size[1]/self.conv_stride))
-            init_states.append(self.conv_lstm_blocks[i].conv_lstm.init_hidden(batch_size, cur_image_size))
+    def _init_hidden(self, batch_size, cur_image_size, layer_index):
+        init_states = self.conv_lstm_blocks[layer_index].conv_lstm.init_hidden(batch_size, cur_image_size)
         return init_states
 
 
@@ -182,7 +174,7 @@ class ConvLSTMCell(nn.Module):
     def init_hidden(self, batch_size, image_size):
         height, width = image_size
         h_init = torch.zeros(batch_size, self.hidden_dim, height, width)
-        c_init = torch.zeros(batch_size, self.hidden_dim, int(height/self.stride), int(width/self.stride))
+        c_init = torch.zeros(batch_size, self.hidden_dim, height, width)
         return h_init.type_as(self.conv.weight), c_init.type_as(self.conv.weight)
 
 
