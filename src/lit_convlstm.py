@@ -28,7 +28,9 @@ class ConvLSTMModule(pl.LightningModule):
         self.flatten = nn.Flatten(start_dim=1, end_dim=-1)
         self.dropout = nn.Dropout(p=dropout_classifier)
 
-        self.spatial_out_dim = hidden_per_layer[-1] * int(self.h /(2**self.num_layers*conv_stride)) * int(self.w/(2**self.num_layers*conv_stride))
+        sample_input = torch.autograd.Variable(torch.rand(1, self.t, self.c, self.h, self.w)) 
+        sample_output = self.convlstm_encoder(sample_input)
+        self.spatial_out_dim = torch.prod(torch.tensor(sample_output.shape[2:]))
 
         if self.return_sequence:
             self.encoder_out_dim = self.t * self.spatial_out_dim

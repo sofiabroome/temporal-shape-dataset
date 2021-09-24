@@ -84,9 +84,10 @@ class ConvLSTMBlock(nn.Module):
 
     def __init__(self, input_dim, hidden_dim, kernel_size, stride, bias):
         super().__init__()
+        self.stride = stride
         self.conv_lstm = ConvLSTMCell(input_dim, hidden_dim=hidden_dim,
                                       kernel_size=[kernel_size, kernel_size],
-                                      stride=stride, bias=bias)
+                                      stride=self.stride, bias=bias)
         self.mp2d = nn.MaxPool2d(kernel_size=2, stride=2)
         self.bn = nn.BatchNorm3d(num_features=hidden_dim)
 
@@ -102,7 +103,7 @@ class ConvLSTMBlock(nn.Module):
             output_inner.append(h)
 
             layer_output = torch.stack(output_inner, dim=1)
-        _, _, _, height, width = cur_layer_input.size()  # h and w can change depending on stride
+        _, _, _, height, width = layer_output.size()  # h and w can change depending on stride
         x = layer_output.view(b * seq_len, out_channels, height, width)
         x = self.mp2d(x)
         x = x.view(b, seq_len, out_channels, int(height/2), int(width/2))
@@ -143,29 +144,39 @@ class ConvLSTMCell(nn.Module):
         self.stride = stride
         self.bias = bias
 
-        self.conv = nn.Conv2d(in_channels=self.input_dim + self.hidden_dim,
+        self.input_conv = nn.Conv2d(in_channels=self.input_dim,
                               out_channels=4 * self.hidden_dim,
                               kernel_size=self.kernel_size,
                               stride=self.stride,
                               padding=self.padding,
                               bias=self.bias)
 
+        self.recurrent_conv = nn.Conv2d(in_channels=self.hidden_dim,
+                              out_channels=4 * self.hidden_dim,
+                              kernel_size=self.kernel_size,
+                              stride=1,
+                              padding=self.padding,
+                              bias=self.bias)
+
     def forward(self, input_tensor, cur_state):
 
-        if self.stride > 1:  # TODO conv stride >1 requires separate input conv.
-            print('Conv strides >1 is not implemented yet.')
-            raise NotImplementedError()
         h_cur, c_cur = cur_state
 
-        combined = torch.cat([input_tensor, h_cur], dim=1)  # concatenate along channel axis
+        input_conv_output = self.input_conv(input_tensor) 
+        recurrent_conv_output = self.recurrent_conv(h_cur) 
 
-        combined_conv = self.conv(combined)
-        cc_i, cc_f, cc_o, cc_g = torch.split(combined_conv, self.hidden_dim, dim=1)
+        ic_i, ic_f, ic_o, ic_g = torch.split(input_conv_output, self.hidden_dim, dim=1)
+        rc_i, rc_f, rc_o, rc_g = torch.split(recurrent_conv_output, self.hidden_dim, dim=1)
+
+        cc_i = ic_i + rc_i
+        cc_f = ic_f + rc_f
+        cc_o = ic_o + rc_o
+        cc_g = ic_g + rc_g
+
         i = torch.sigmoid(cc_i)
         f = torch.sigmoid(cc_f)
         o = torch.sigmoid(cc_o)
         g = torch.tanh(cc_g)
-
         c_next = f * c_cur + i * g
         h_next = o * torch.tanh(c_next)
 
@@ -173,16 +184,16 @@ class ConvLSTMCell(nn.Module):
 
     def init_hidden(self, batch_size, image_size):
         height, width = image_size
-        h_init = torch.zeros(batch_size, self.hidden_dim, height, width)
-        c_init = torch.zeros(batch_size, self.hidden_dim, height, width)
-        return h_init.type_as(self.conv.weight), c_init.type_as(self.conv.weight)
+        h_init = torch.zeros(batch_size, self.hidden_dim, int(height/self.stride), int(width/self.stride))
+        c_init = torch.zeros(batch_size, self.hidden_dim, int(height/self.stride), int(width/self.stride))
+        return h_init.type_as(self.recurrent_conv.weight), c_init.type_as(self.recurrent_conv.weight)
 
 
 if __name__ == '__main__':
 
-    model = StackedConvLSTMModel(input_channels=1, hidden_per_layer=[2, 2, 2],
+    model = StackedConvLSTMModel(input_channels=1, hidden_per_layer=[8, 8, 8],
                                  return_sequence=True, kernel_size_per_layer=[3, 3, 3],
-                                 conv_stride=1)
+                                 conv_stride=2)
     output_list = model(torch.rand(1, 20, 1, 64, 64))
     print(len(output_list))
     print(output_list[0].size(), '\n')
