@@ -6,6 +6,7 @@ from tqdm import tqdm
 from enum import Enum
 import pandas as pd
 import numpy as np
+import random
 
 from generate_regression_dataset import arr_from_img, get_image_from_array, load_mnist
 
@@ -23,9 +24,17 @@ class TemporalShape(Enum):
     S = 6
 
 
+def random_flip(array):
+    draw = random.uniform(0, 1)
+    if draw > 0.5:
+        array = np.flip(array)
+    return array
+
+
 def generate_circle(time_steps, r):
     angles = np.linspace(0, 2*np.pi, time_steps)
-    #TODO randomly inverse order of angles
+    angles = random_flip(angles)
+    angles = np.roll(angles, shift=np.random.randint(time_steps))
     velocities = [np.array([r*np.cos(phi), r*np.sin(phi)])
                   for phi in angles]
     return velocities
@@ -33,7 +42,7 @@ def generate_circle(time_steps, r):
 
 def generate_arc(time_steps, r):
     angles = np.linspace(0, np.pi, time_steps)
-    #TODO randomly inverse order of angles
+    angles = random_flip(angles)
     velocities = [np.array([r*np.cos(phi), r*np.sin(phi)])
                   for phi in angles]
     return velocities
@@ -41,29 +50,25 @@ def generate_arc(time_steps, r):
 
 def generate_spiral(time_steps, max_radius):
     t_array = np.linspace(0, max_radius, time_steps)
-    velocities = [np.array([t*np.cos(t), t*np.sin(t)])
+    t_array = random_flip(t_array)
+    velocities = [np.array([0.5*t*np.cos(t), 0.5*t*np.sin(t)])
                   for t in t_array]
     return velocities
 
 
-def generate_line(time_steps):
-    # Randomly generate direction, speed and velocity for both images
-    direc = np.pi * (np.random.rand() * 2 - 1)  # Scalars, one per digit
-    #TODO test how different speeds look
-    speed = np.random.randint(5) + 2  # Scalars, one per digit
-    # speed = 1  # Scalars, one per digit
-    # veloc is 2xnums_per_image (x and y component for velocity for each digit)
+def generate_line(speed, time_steps):
+    # Randomly generate direction, speed and velocity
+    direc = np.pi * (np.random.rand() * 2 - 1)
     veloc = np.asarray((speed * math.cos(direc), speed * math.sin(direc)))
     velocities = [veloc for i in range(time_steps)]
     return velocities
 
 
-def generate_rectangle(time_steps):
+def generate_rectangle(speed, time_steps):
     nb_sides = 4
     direcs = np.asarray([np.pi/2, np.pi, -np.pi/2, 0])
-    #TODO randperm direcs
-    speed = 1.5  # Scalars, one per digit
-    # veloc is 2xnums_per_image (x and y component for velocity for each digit)
+    direcs = random_flip(direcs)
+    direcs = np.roll(direcs, shift=np.random.randint(time_steps))
     velocs = [np.asarray((speed * math.cos(direc), speed * math.sin(direc))) for direc in direcs]
     interval_length = int(time_steps/nb_sides)
     velocities = []
@@ -72,19 +77,14 @@ def generate_rectangle(time_steps):
     return velocities
 
 
-def get_limits(lims, symbol_width, max_radius, shape=None):
-    extra_margin = max_radius + 2
-    low = 2 * max_radius + extra_margin
-    high = lims[1] - symbol_width
-    if shape == 'SPIRAL':
-        low = 2 * max_radius  # + extra_margin
-        high = lims[1] - symbol_width - max_radius
+def get_starting_point_limits(image_size, symbol_width, max_radius):
+    low = 2 * max_radius + symbol_width
+    high = image_size - low
     return low, high
 
 
 def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num_sequences=2,
-                                    symbol_size=14, nums_per_image=1,
-                                    max_radius=2, object_mode='dot', save_gifs=True):
+                                    symbol_size=14, nums_per_image=1, object_mode='dot', save_gifs=True):
     """
     Args:
         training: Boolean, used to decide if downloading/generating train set or test set
@@ -100,43 +100,66 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
     width, height = shape
 
     labels = []
+    if object_mode == 'dot':
+        max_radius = 2 + symbol_size
 
     if object_mode == 'mnist':
         mnist = load_mnist(training)
+        max_radius = 2
 
     # Get how many pixels can we move around a single image (to fit its width)
-    lims = width - symbol_size, height - symbol_size
-    low, high = get_limits(lims, symbol_size, max_radius)
+    wall_lims = width - symbol_size, height - symbol_size
+    low, high = get_starting_point_limits(width, symbol_size, max_radius)
     print(low, high)
-    print('lims: ', lims, '\n')
+    print('wall_lims: ', wall_lims, '\n')
 
     gif_counter = 0
 
     print('Generating sequences...')
     for img_idx in tqdm(range(num_sequences)):
+        max_radius = 2
         # Create an array of shape num_sequences x 1 x new_width x new_height
         sequence = np.empty((num_frames, 1, width, height), dtype=np.uint8)
 
         label = np.random.randint(num_classes)
+        # label = 1
         labels.append(label)
 
         if TemporalShape(label).name == 'CIRCLE':
             velocities = generate_circle(time_steps=num_frames, r=max_radius)
+            max_radius = 8
+            low, high = get_starting_point_limits(width, symbol_size, max_radius=max_radius)
+            print('Circle, adjusted: ')
+            print(low, high, '\n')
 
         if TemporalShape(label).name == 'ARC':
+            max_radius = 2
             velocities = generate_arc(time_steps=num_frames, r=max_radius)
+            max_radius = 8
+            low, high = get_starting_point_limits(width, symbol_size, max_radius=max_radius)
+            print('Arc, adjusted: ')
+            print(low, high, '\n')
 
         if TemporalShape(label).name == 'SPIRAL':
-            velocities = generate_spiral(time_steps=num_frames, max_radius=10)
-            low, high = get_limits(lims, symbol_size, max_radius=10, shape='SPIRAL')
-            # print('adjusted: ')
-            # print(low, high, '\n')
+            max_radius = 10
+            if object_mode == 'mnist':
+                max_radius = 8
+            velocities = generate_spiral(time_steps=num_frames, max_radius=max_radius)
+            low, high = get_starting_point_limits(width, symbol_size, max_radius=max_radius)
+            print('Spiral, adjusted: ')
+            print(low, high, '\n')
 
         if TemporalShape(label).name == 'LINE':
-            velocities = generate_line(time_steps=num_frames)
+            speed = np.random.randint(1, 4)
+            max_radius = speed * max_radius
+            low, high = get_starting_point_limits(width, symbol_size, max_radius=max_radius)
+            velocities = generate_line(speed=speed, time_steps=num_frames)
 
         if TemporalShape(label).name == 'RECTANGLE':
-            velocities = generate_rectangle(time_steps=num_frames)
+            speed = np.random.randint(1, 4)
+            max_radius = speed * max_radius
+            low, high = get_starting_point_limits(width, symbol_size, max_radius=max_radius)
+            velocities = generate_rectangle(speed=speed, time_steps=num_frames)
 
         if object_mode == 'mnist':
             # Get a list containing three PIL images randomly sampled from the database
@@ -175,9 +198,9 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
 
             # Iterate over velocity and see if we hit the wall
             # If we do then change the  (change direction)
-            # if coord < -2 or coord > lims[j] + 2:
+            # if coord < -2 or coord > wall_lims[j] + 2:
             for j, coord in enumerate(next_pos):
-                if coord < 0 or coord > lims[1]:
+                if coord < 0 or coord > wall_lims[1]:
                     # One of list(veloc[i][:j]) or list(veloc[i][j + 1:])
                     # always gives an empty list [].
                     # Whereas [-1 * veloc[i][j]] reverses that component.
@@ -212,8 +235,8 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
     return labels_df
 
 
-def main(training, dest, frame_size=64, num_frames=30, num_sequences=2,
-         symbol_size=14, nums_per_image=1, object_mode='dot', save_gifs=True):
+def main(training, dest, frame_size, num_frames, num_sequences,
+         symbol_size, nums_per_image, object_mode, save_gifs=True):
     labels_df = generate_temporal_shape_dataset(
         training, shape=(frame_size, frame_size), num_frames=num_frames,
         num_sequences=num_sequences, symbol_size=symbol_size,
@@ -223,13 +246,13 @@ def main(training, dest, frame_size=64, num_frames=30, num_sequences=2,
 
 if __name__ == '__main__':
     num_frames = 20
-    num_sequences = 10000
+    num_sequences = 100
     train_test = 'train'
 
     object_mode = 'dot'
     symbol_size = 2
-    # object_mode = 'mnist'
-    # symbol_size = 14
+    object_mode = 'mnist'
+    symbol_size = 14
 
     num_classes = 5
 
@@ -237,6 +260,6 @@ if __name__ == '__main__':
     dest = f'../../data/classification_{symbol_size}{object_mode}_{num_classes}classes_{train_test}_{num_sequences}seqs_{num_frames}_per_seq/'
     if not os.path.isdir(dest):
         os.mkdir(dest)
-    main(training=train, dest=dest, num_frames=num_frames, num_sequences=num_sequences,
+    main(frame_size=64, nums_per_image=1, training=train, dest=dest, num_frames=num_frames, num_sequences=num_sequences,
          object_mode=object_mode, symbol_size=symbol_size, save_gifs=True)
 
