@@ -25,6 +25,7 @@ class TemporalShape(Enum):
 
 def generate_circle(time_steps, r):
     angles = np.linspace(0, 2*np.pi, time_steps)
+    #TODO randomly inverse order of angles
     velocities = [np.array([r*np.cos(phi), r*np.sin(phi)])
                   for phi in angles]
     return velocities
@@ -32,6 +33,7 @@ def generate_circle(time_steps, r):
 
 def generate_arc(time_steps, r):
     angles = np.linspace(0, np.pi, time_steps)
+    #TODO randomly inverse order of angles
     velocities = [np.array([r*np.cos(phi), r*np.sin(phi)])
                   for phi in angles]
     return velocities
@@ -47,8 +49,9 @@ def generate_spiral(time_steps, max_radius):
 def generate_line(time_steps):
     # Randomly generate direction, speed and velocity for both images
     direc = np.pi * (np.random.rand() * 2 - 1)  # Scalars, one per digit
-    # speed = np.random.randint(5) + 2  # Scalars, one per digit
-    speed = 1  # Scalars, one per digit
+    #TODO test how different speeds look
+    speed = np.random.randint(5) + 2  # Scalars, one per digit
+    # speed = 1  # Scalars, one per digit
     # veloc is 2xnums_per_image (x and y component for velocity for each digit)
     veloc = np.asarray((speed * math.cos(direc), speed * math.sin(direc)))
     velocities = [veloc for i in range(time_steps)]
@@ -58,6 +61,7 @@ def generate_line(time_steps):
 def generate_rectangle(time_steps):
     nb_sides = 4
     direcs = np.asarray([np.pi/2, np.pi, -np.pi/2, 0])
+    #TODO randperm direcs
     speed = 1.5  # Scalars, one per digit
     # veloc is 2xnums_per_image (x and y component for velocity for each digit)
     velocs = [np.asarray((speed * math.cos(direc), speed * math.sin(direc))) for direc in direcs]
