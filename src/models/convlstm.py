@@ -57,12 +57,15 @@ class StackedConvLSTMModel(nn.Module):
 
         cur_layer_input = input_tensor
 
+        # print(cur_layer_input.size())
+
         for layer_idx in range(self.num_layers):
             initial_hidden_states = self._init_hidden(
                 batch_size=b, cur_image_size=cur_layer_input.shape[-2:], layer_index=layer_idx)
             layer_output = self.conv_lstm_blocks[layer_idx](
                 cur_layer_input=cur_layer_input,
                 initial_hidden_states=initial_hidden_states)
+            # print(layer_output.size())
 
             cur_layer_input = layer_output
             layer_output_list.append(layer_output)
@@ -72,7 +75,6 @@ class StackedConvLSTMModel(nn.Module):
 
         if not self.return_sequence:
             layer_output_list = layer_output_list[:,-1,:]
-
         return layer_output_list
 
     def _init_hidden(self, batch_size, cur_image_size, layer_index):
@@ -191,12 +193,13 @@ class ConvLSTMCell(nn.Module):
 
 if __name__ == '__main__':
 
-    model = StackedConvLSTMModel(input_channels=1, hidden_per_layer=[8, 8, 8],
-                                 return_sequence=True, kernel_size_per_layer=[3, 3, 3],
-                                 conv_stride=2)
-    output_list = model(torch.rand(1, 20, 1, 64, 64))
-    print(len(output_list))
-    print(output_list[0].size(), '\n')
+    model = StackedConvLSTMModel(input_channels=1, hidden_per_layer=[2, 2, 2],
+                                 return_sequence=False, kernel_size_per_layer=[3, 3, 3],
+                                 conv_stride=1)
+    output_list = model(torch.rand(64, 20, 1, 64, 64))
+
+    print('\n Output size:')
+    print(output_list.size(), '\n')
 
     pytorch_total_params = sum(p.numel() for p in model.parameters())
     print('pytorch_total_params', pytorch_total_params)

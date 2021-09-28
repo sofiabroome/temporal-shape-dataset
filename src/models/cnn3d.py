@@ -57,8 +57,10 @@ class VGGStyle3DCNN(nn.Module):
 
     def forward(self, x):
         
+        # print(x.size())
         for layer_idx in range(self.num_layers):
             x = self.conv3d_blocks[layer_idx](x)
+            # print(x.size())
 
         return x
 
@@ -67,7 +69,9 @@ class Conv3dBlock(nn.Module):
 
     def __init__(self, input_dim, hidden_dim, kernel_size, stride, pooling, dropout):
         super().__init__()
-        self.conv3d = nn.Conv3d(input_dim, hidden_dim, kernel_size=(kernel_size, kernel_size, kernel_size), stride=stride, dilation=(1, 1, 1), padding=(1, 1, 1))
+        self.conv3d = nn.Conv3d(input_dim, hidden_dim,
+            kernel_size=(kernel_size, kernel_size, kernel_size),
+            stride=stride, dilation=(1, 1, 1), padding=(1, 1, 1))
         self.bn = nn.BatchNorm3d(hidden_dim)
         self.relu = nn.ReLU(inplace=True)
         if pooling == 'max':
@@ -77,11 +81,10 @@ class Conv3dBlock(nn.Module):
         self.dropout3d = nn.Dropout3d(p=dropout)
 
     def forward(self, x):
-
         x = self.conv3d(x)
+        x = self.relu(x)
         x = self.pool(x)
         x = self.bn(x)
-        x = self.relu(x)
         x = self.dropout3d(x)
         return x
 
@@ -90,8 +93,13 @@ if __name__ == "__main__":
     input_tensor = torch.autograd.Variable(torch.rand(64, 1, 20, 64, 64))
     model = VGGStyle3DCNN(input_channels=1, hidden_per_layer=[2, 2, 2],
         kernel_size_per_layer=[3, 3, 3],
-        conv_stride=1)
+        conv_stride=1,
+        pooling=["max", "max", "max"],
+        dropout=0
+        )
     output = model(input_tensor)
+
+    print('\n Output size:')
     print(output.size(), '\n')
 
     pytorch_total_params = sum(p.numel() for p in model.parameters())
