@@ -30,12 +30,7 @@ class ConvLSTMModule(pl.LightningModule):
 
         sample_input = torch.autograd.Variable(torch.rand(1, self.t, self.c, self.h, self.w)) 
         sample_output = self.convlstm_encoder(sample_input)
-        self.spatial_out_dim = torch.prod(torch.tensor(sample_output.shape[2:]))
-
-        if self.return_sequence:
-            self.encoder_out_dim = self.t * self.spatial_out_dim
-        else:
-            self.encoder_out_dim = self.spatial_out_dim
+        self.encoder_out_dim = torch.prod(torch.tensor(sample_output.shape[1:]))
 
         self.linear = nn.Linear(
             in_features=self.encoder_out_dim,
