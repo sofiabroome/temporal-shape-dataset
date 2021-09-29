@@ -4,11 +4,12 @@
     "output_dir": "../trained_models/",
     "checkpoint_path": "-1",
 
-    "data_folder": "../data/classification_dot_5classes_train_10000seqs_20_per_seq/",
-    "test_data_folder": "../data/classification_1dot_5classes_train_1000seqs_20_per_seq/",
+    "data_folder": "../data/classification_2dot_5classes_train_1000seqs_20_per_seq/",
+    "test_data_folder": "../data/classification_5dot_5classes_train_500seqs_20_per_seq/",
+    "test_data_folder_2": "../data/classification_14mnist_5classes_train_500seqs_20_per_seq/",
 
-    "nb_train_samples": 9000,
-    "nb_val_samples": 1000,
+    "nb_train_samples": 900,
+    "nb_val_samples": 100,
 
     "num_workers": 128,
 
@@ -16,19 +17,19 @@
     "clip_size": 20,
     "nb_labels": 5,
 
-    "hidden_per_layer": [1, 1, 1],
-    "kernel_size_per_layer": [3, 3, 3],
+    "hidden_per_layer": [3, 3, 3],
+    "kernel_size_per_layer": [5, 5, 5],
     "conv_stride": 1,
-    "pooling": ["max", "avg", "max"],
+    "pooling": ["max", "max", "max"],
 
-    "optimizer": "Adam",
-    "lr": 0.0001,
+    "optimizer": "SGD",
+    "lr": 0.001,
     "reduce_lr": 0,
     "last_lr": 0.00001,
     "momentum": 0.9,
     "num_epochs": 100,
 
-    "early_stopping_patience": 5,
+    "early_stopping_patience": 10,
     "weight_decay": 0.00001,
 
     "dropout_encoder": 0,
