@@ -55,7 +55,8 @@ def generate_arc(time_steps, r):
 def generate_spiral(time_steps, max_radius):
     t_array = np.linspace(0, max_radius, time_steps)
     t_array = random_flip(t_array)
-    velocities = [np.array([0.5*t*np.cos(t), 0.5*t*np.sin(t)])
+    t_scaling = np.random.randint(2, 11) * 0.1
+    velocities = [np.array([t_scaling*t*np.cos(t), t_scaling*t*np.sin(t)])
                   for t in t_array]
     return velocities
 
@@ -166,12 +167,16 @@ def generate_temporal_shape_dataset(training, shape, num_frames, num_sequences,
             speed = np.random.randint(1, 4)
             max_radius = speed * max_radius
             low, high = get_starting_point_limits(width, symbol_size, max_radius=max_radius)
+            print('Line, adjusted: ')
+            print(low, high, '\n')
             velocities = generate_line(speed=speed, time_steps=num_frames)
 
         if TemporalShape(label).name == 'RECTANGLE':
             speed = np.random.randint(1, 4)
             max_radius = speed * max_radius
             low, high = get_starting_point_limits(width, symbol_size, max_radius=max_radius)
+            print('Rectangle, adjusted: ')
+            print(low, high, '\n')
             velocities = generate_rectangle(speed=speed, time_steps=num_frames)
 
         if object_mode == 'mnist':
