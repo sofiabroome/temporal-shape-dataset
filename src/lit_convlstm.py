@@ -10,7 +10,8 @@ import torch
 class ConvLSTMModule(pl.LightningModule):
     def __init__(self, input_size, optimizer, hidden_per_layer, nb_labels,
                  kernel_size_per_layer, conv_stride, lr, reduce_lr,
-                 momentum, weight_decay, dropout_classifier, return_sequence):
+                 momentum, weight_decay, dropout_classifier,
+                 return_sequence, if_not_sequence):
         super(ConvLSTMModule, self).__init__()
 
         self.b, self.t, self.c, self.h, self.w = input_size
@@ -23,8 +24,10 @@ class ConvLSTMModule(pl.LightningModule):
         self.momentum = momentum
         self.weight_decay = weight_decay
         self.return_sequence = return_sequence
+        self.if_not_sequence = if_not_sequence
         self.convlstm_encoder = StackedConvLSTMModel(
-            self.c, hidden_per_layer, kernel_size_per_layer, conv_stride, return_sequence=return_sequence)
+            self.c, hidden_per_layer, kernel_size_per_layer, conv_stride,
+            return_sequence=self.return_sequence, if_not_sequence=self.if_not_sequence)
         self.flatten = nn.Flatten(start_dim=1, end_dim=-1)
         self.dropout = nn.Dropout(p=dropout_classifier)
 

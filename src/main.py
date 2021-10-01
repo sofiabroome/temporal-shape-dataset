@@ -47,7 +47,8 @@ def main():
                                lr=config['lr'], reduce_lr=config['reduce_lr'],
                                momentum=config['momentum'], weight_decay=config['weight_decay'],
                                dropout_classifier=config['dropout_classifier'],
-                               return_sequence=config['return_sequence'])
+                               return_sequence=config['return_sequence'],
+                               if_not_sequence=config['if_not_sequence'])
 
     if config['model_name'] == 'lit_3dconv':
         model = ThreeDCNNModule(input_size=(config['batch_size'], config['clip_size'], 1,

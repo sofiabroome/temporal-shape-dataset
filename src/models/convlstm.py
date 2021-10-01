@@ -8,7 +8,8 @@ import pytorch_lightning as pl
 
 class StackedConvLSTMModel(nn.Module):
     def __init__(self, input_channels, hidden_per_layer, kernel_size_per_layer,
-                 conv_stride, return_all_layers=False, return_sequence=True, batch_first=True):
+                 conv_stride, return_sequence, if_not_sequence,
+                 return_all_layers=False, batch_first=True):
         super(StackedConvLSTMModel, self).__init__()
 
         self.hidden_per_layer = hidden_per_layer
@@ -17,6 +18,7 @@ class StackedConvLSTMModel(nn.Module):
         self.num_layers = len(hidden_per_layer)
         self.return_all_layers = return_all_layers
         self.return_sequence = return_sequence
+        self.if_not_sequence = if_not_sequence
         self.batch_first = batch_first
         self.blocks = []
 
@@ -74,7 +76,15 @@ class StackedConvLSTMModel(nn.Module):
             layer_output_list = layer_output_list[-1]
 
         if not self.return_sequence:
-            layer_output_list = layer_output_list[:,-1,:]
+            if self.if_not_sequence == 'middle_last':
+                middle_ind = int(seq_len/2)
+                middle = layer_output_list[:,middle_ind:middle_ind+1,:]
+                last = layer_output_list[:,-1:,:]
+                layer_output_list = torch.cat((middle, last), dim=1)
+            if self.if_not_sequence == 'two_last':
+                layer_output_list = layer_output_list[:,-2:,:]
+            if self.if_not_sequence == 'last':
+                layer_output_list = layer_output_list[:,-1:,:]
         return layer_output_list
 
     def _init_hidden(self, batch_size, cur_image_size, layer_index):
@@ -193,9 +203,9 @@ class ConvLSTMCell(nn.Module):
 
 if __name__ == '__main__':
 
-    model = StackedConvLSTMModel(input_channels=1, hidden_per_layer=[2, 2, 2],
+    model = StackedConvLSTMModel(input_channels=1, hidden_per_layer=[3, 3, 3],
                                  return_sequence=False, kernel_size_per_layer=[3, 3, 3],
-                                 conv_stride=1)
+                                 conv_stride=1, if_not_sequence='two_last')
     output_list = model(torch.rand(64, 20, 1, 64, 64))
 
     print('\n Output size:')
