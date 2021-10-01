@@ -6,6 +6,7 @@ from tqdm import tqdm
 from enum import Enum
 import pandas as pd
 import numpy as np
+import argparse
 import random
 
 from perlin_noise import PerlinNoise
@@ -266,22 +267,33 @@ def main(training, dest, frame_size, num_frames, num_sequences,
 
 if __name__ == '__main__':
     num_frames = 20
-    num_sequences = 20
-    train_test_mnist = 'train'
-
-    object_mode = 'dot'
-    symbol_size = 2
-    # object_mode = 'mnist'
-    # symbol_size = 14
-
-    textured_background = True
-
     num_classes = 5
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num-sequences")
+    parser.add_argument("--object-mode")
+    parser.add_argument("--symbol-size")
+    parser.add_argument("--train-test-mnist")
+    parser.add_argument("--textured-background")
+    args = parser.parse_args()
+
+    num_sequences = int(args.num_sequences)
+    object_mode = args.object_mode
+    symbol_size = int(args.symbol_size)
+    textured_background = int(args.textured_background)
+
+    if object_mode == 'mnist':
+        train_test_mnist = args.train_test_mnist
+    else:
+        train_test_mnist = ''
+
     train = True if train_test_mnist == 'train' else False
-    dest = f'../../data/classification_{symbol_size}{object_mode}_bg{textured_background}_{num_classes}classes_{train_test_mnist}_{num_sequences}seqs_{num_frames}_per_seq/'
+
+    dest = f'../../data/classification_{symbol_size}{object_mode}_{train_test_mnist}_bg{textured_background}_{num_classes}classes_{num_sequences}seqs_{num_frames}_per_seq/'
+
     if not os.path.isdir(dest):
         os.mkdir(dest)
+
     main(frame_size=64, nums_per_image=1, training=train, dest=dest, num_frames=num_frames, num_sequences=num_sequences,
          object_mode=object_mode, symbol_size=symbol_size, textured_background=textured_background, save_gifs=True)
 
