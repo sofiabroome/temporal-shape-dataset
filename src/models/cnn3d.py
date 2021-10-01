@@ -27,11 +27,17 @@ class VGGStyle3DCNN(nn.Module):
 
         assert(len(hidden_per_layer) == len(kernel_size_per_layer))
 
+        if self.num_layers > 4:
+            self.pooling_padding = 1
+        else:
+            self.pooling_padding = 0
+
         for i, nb_channels in enumerate(self.hidden_per_layer):
             cur_input_dim = self.input_channels if i == 0 else self.hidden_per_layer[i - 1]
             self.blocks.append(Conv3dBlock(cur_input_dim, hidden_dim=hidden_per_layer[i],
-                                             kernel_size=kernel_size_per_layer[i],
-                                             stride=self.conv_stride, pooling=self.pooling[i], dropout=self.dropout))
+                                           kernel_size=kernel_size_per_layer[i],
+                                           stride=self.conv_stride, pooling=self.pooling[i],
+                                           pooling_padding=self.pooling_padding, dropout=self.dropout))
         self.conv3d_blocks = nn.ModuleList(self.blocks)
         # self.block1 = nn.Sequential(
         #     nn.Conv3d(1, 2, kernel_size=(3, 3, 3), stride=(1, 2, 2), dilation=(1, 1, 1), padding=(1, 2, 2)),
@@ -67,7 +73,8 @@ class VGGStyle3DCNN(nn.Module):
 
 class Conv3dBlock(nn.Module):
 
-    def __init__(self, input_dim, hidden_dim, kernel_size, stride, pooling, dropout):
+    def __init__(self, input_dim, hidden_dim, kernel_size, stride,
+                 pooling, pooling_padding, dropout):
         super().__init__()
         # Pad according to kernel size to keep size in convolutions
         self.padding = kernel_size // 2, kernel_size // 2, kernel_size // 2 
@@ -77,9 +84,11 @@ class Conv3dBlock(nn.Module):
         self.bn = nn.BatchNorm3d(hidden_dim)
         self.relu = nn.ReLU(inplace=True)
         if pooling == 'max':
-            self.pool = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
+            self.pool = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2),
+                padding=pooling_padding)
         if pooling == 'avg':
-            self.pool = nn.AvgPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
+            self.pool = nn.AvgPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2),
+                padding=pooling_padding)
         self.dropout3d = nn.Dropout3d(p=dropout)
 
     def forward(self, x):
@@ -88,8 +97,6 @@ class Conv3dBlock(nn.Module):
         x = self.conv3d(x)
         # print(x.size())
         x = self.relu(x)
-        # if not 2 in x.size()[2:]:
-        #     x = self.pool(x)
         x = self.pool(x)
         # print(x.size())
         # print('end block \n')
@@ -100,10 +107,10 @@ class Conv3dBlock(nn.Module):
 
 if __name__ == "__main__":
     input_tensor = torch.autograd.Variable(torch.rand(64, 1, 20, 64, 64))
-    model = VGGStyle3DCNN(input_channels=1, hidden_per_layer=[5, 5, 5],
-        kernel_size_per_layer=[3, 3, 3],
+    model = VGGStyle3DCNN(input_channels=1, hidden_per_layer=[ 5, 5, 5, 5, 5, 5, 5, 5],
+        kernel_size_per_layer=[3, 3, 3, 3, 3, 3, 3, 3],
         conv_stride=1,
-        pooling=["max", "max", "max"],
+        pooling=["max", "max", "max", "max", "max", "max", "max", "max"],
         dropout=0
         )
     output = model(input_tensor)
