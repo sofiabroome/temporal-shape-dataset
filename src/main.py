@@ -100,6 +100,7 @@ def main():
 
     test_dm = TemporalShapeDataModule(data_dir=config['test_data_folder'], config=config, seq_first=model.seq_first)
     test_dm_2 = TemporalShapeDataModule(data_dir=config['test_data_folder_2'], config=config, seq_first=model.seq_first)
+    test_dm_3 = TemporalShapeDataModule(data_dir=config['test_data_folder_3'], config=config, seq_first=model.seq_first)
 
     if config['inference_from_checkpoint_only']:
         model_from_checkpoint = ConvLSTMModule.load_from_checkpoint(config['ckpt_path'])
@@ -111,6 +112,7 @@ def main():
         wandb_logger.log_metrics({'best_val_acc': trainer.checkpoint_callback.best_model_score})
         trainer.test(datamodule=test_dm)
         trainer.test(datamodule=test_dm_2)
+        trainer.test(datamodule=test_dm_3)
 
 if __name__ == '__main__':
     main()
