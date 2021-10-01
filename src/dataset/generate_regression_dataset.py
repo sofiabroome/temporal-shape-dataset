@@ -30,18 +30,25 @@ def arr_from_img(im, mean=0, std=1):
         (height, width, c)).transpose(2, 1, 0) / 255. - mean) / std
 
 
-def get_image_from_array(data_array, index, mean=0, std=1):
+def get_image_from_array(data_array, index, allow_nuances, mean=0, std=1):
     """
     Args:
         data_array: Dataset of shape N x C x W x H
         index: Index of image we want to fetch
+        allow_nuances: Boolean, whether to rescale (=removes nuances) or not
         mean: Mean to add
         std: Standard Deviation to add
     Returns:
         Image with dimensions H x W x C or H x W if it's a single channel image
     """
     ch, w, h = data_array.shape[1], data_array.shape[2], data_array.shape[3]
-    ret = (((data_array[index] + mean) * 255.) * std).reshape(
+
+    if allow_nuances:
+        scaling_factor = 1
+    else:
+        scaling_factor = 255.
+
+    ret = (((data_array[index] + mean) * scaling_factor) * std).reshape(
         ch, w, h).transpose(2, 1, 0).clip(0, 255).astype(np.uint8)
     if ch == 1:
         ret = ret.reshape(h, w)

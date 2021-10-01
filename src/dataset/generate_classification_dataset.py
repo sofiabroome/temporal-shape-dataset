@@ -8,6 +8,8 @@ import pandas as pd
 import numpy as np
 import random
 
+from perlin_noise import PerlinNoise
+
 from generate_regression_dataset import arr_from_img, get_image_from_array, load_mnist
 
 # Code adapted from the following gist by Praateek Mahajan:
@@ -41,7 +43,8 @@ def generate_circle(time_steps, r):
 
 
 def generate_arc(time_steps, r):
-    angles = np.linspace(0, np.pi, time_steps)
+    random_start_angle = random.uniform(0, 2*np.pi)
+    angles = np.linspace(random_start_angle, random_start_angle + np.pi, time_steps)
     angles = random_flip(angles)
     velocities = [np.array([r*np.cos(phi), r*np.sin(phi)])
                   for phi in angles]
@@ -77,14 +80,23 @@ def generate_rectangle(speed, time_steps):
     return velocities
 
 
+def generate_textured_background(canvas, octaves):
+    noise = PerlinNoise(octaves=octaves)
+    xpix = canvas.shape[1]
+    ypix = canvas.shape[2]
+    canvas_with_perlin_background = [[noise([i/xpix, j/ypix]) for j in range(xpix)] for i in range(ypix)]
+    return np.asarray(canvas_with_perlin_background).reshape(1, xpix, ypix)
+
+
 def get_starting_point_limits(image_size, symbol_width, max_radius):
     low = 2 * max_radius + symbol_width
     high = image_size - low
     return low, high
 
 
-def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num_sequences=2,
-                                    symbol_size=14, nums_per_image=1, object_mode='dot', save_gifs=True):
+def generate_temporal_shape_dataset(training, shape, num_frames, num_sequences,
+                                    symbol_size, nums_per_image, object_mode,
+                                    textured_background, save_gifs=True):
     """
     Args:
         training: Boolean, used to decide if downloading/generating train set or test set
@@ -120,9 +132,9 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
         max_radius = 2
         # Create an array of shape num_sequences x 1 x new_width x new_height
         sequence = np.empty((num_frames, 1, width, height), dtype=np.uint8)
-
+        if textured_background:
+            octaves = np.random.randint(1, 10)
         label = np.random.randint(num_classes)
-        # label = 1
         labels.append(label)
 
         if TemporalShape(label).name == 'CIRCLE':
@@ -163,7 +175,8 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
 
         if object_mode == 'mnist':
             # Get a list containing three PIL images randomly sampled from the database
-            mnist_images = [Image.fromarray(get_image_from_array(mnist, r, mean=0)).resize(
+            mnist_images = [Image.fromarray(get_image_from_array(
+                mnist, r, allow_nuances=False, mean=0)).resize(
                 (symbol_size, symbol_size), Image.ANTIALIAS)
                 for r in np.random.randint(0, mnist.shape[0], nums_per_image)]
 
@@ -177,6 +190,9 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
 
             canvases = [Image.new('L', (width, height)) for _ in range(nums_per_image)]
             canvas = np.zeros((1, width, height), dtype=np.float32)
+
+            if textured_background:
+                canvas = generate_textured_background(canvas, octaves=octaves)
 
             for i, canv in enumerate(canvases):
                 # In canv (an Image object), place the image at the respective positions
@@ -215,14 +231,16 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
             # Add the canvas to the dataset array
             sequence[frame_idx] = (canvas * 255).clip(0, 255).astype(np.uint8)
             jpg_index = img_idx * num_frames + frame_idx
-            Image.fromarray(
-                get_image_from_array(sequence, frame_idx, mean=0)).save(os.path.join(dest, '{}.jpg'.format(jpg_index)))
+            image_to_save = Image.fromarray( get_image_from_array(
+                sequence, frame_idx, allow_nuances=True, mean=0))
+            image_to_save.save(os.path.join(dest, '{}.jpg'.format(jpg_index)))
         if save_gifs:
             print('Saving gifs...')
             if gif_counter > 100:
                 continue
             start_index = img_idx * num_frames
-            images_for_gif = [Image.fromarray(get_image_from_array(sequence, j, mean=0)).convert('P') for j in
+            images_for_gif = [Image.fromarray(get_image_from_array(
+                sequence, j, allow_nuances=True, mean=0)).convert('P') for j in
                               range(num_frames)]
             images_for_gif[0].save(os.path.join(dest, f'seq_{gif_counter}_start_{start_index}.gif'),
                                    save_all=True, append_images=images_for_gif[1:],
@@ -236,30 +254,34 @@ def generate_temporal_shape_dataset(training, shape=(64, 64), num_frames=30, num
 
 
 def main(training, dest, frame_size, num_frames, num_sequences,
-         symbol_size, nums_per_image, object_mode, save_gifs=True):
+         symbol_size, nums_per_image, object_mode,
+         textured_background, save_gifs=True):
     labels_df = generate_temporal_shape_dataset(
         training, shape=(frame_size, frame_size), num_frames=num_frames,
         num_sequences=num_sequences, symbol_size=symbol_size,
-        nums_per_image=nums_per_image, object_mode=object_mode, save_gifs=save_gifs)
+        nums_per_image=nums_per_image, object_mode=object_mode,
+        textured_background=textured_background, save_gifs=save_gifs)
     labels_df.to_csv(os.path.join(dest, 'labels.csv'))
 
 
 if __name__ == '__main__':
     num_frames = 20
-    num_sequences = 100
-    train_test = 'train'
+    num_sequences = 20
+    train_test_mnist = 'train'
 
     object_mode = 'dot'
     symbol_size = 2
-    object_mode = 'mnist'
-    symbol_size = 14
+    # object_mode = 'mnist'
+    # symbol_size = 14
+
+    textured_background = True
 
     num_classes = 5
 
-    train = True if train_test == 'train' else False
-    dest = f'../../data/classification_{symbol_size}{object_mode}_{num_classes}classes_{train_test}_{num_sequences}seqs_{num_frames}_per_seq/'
+    train = True if train_test_mnist == 'train' else False
+    dest = f'../../data/classification_{symbol_size}{object_mode}_bg{textured_background}_{num_classes}classes_{train_test_mnist}_{num_sequences}seqs_{num_frames}_per_seq/'
     if not os.path.isdir(dest):
         os.mkdir(dest)
     main(frame_size=64, nums_per_image=1, training=train, dest=dest, num_frames=num_frames, num_sequences=num_sequences,
-         object_mode=object_mode, symbol_size=symbol_size, save_gifs=True)
+         object_mode=object_mode, symbol_size=symbol_size, textured_background=textured_background, save_gifs=True)
 
