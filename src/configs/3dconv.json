@@ -4,11 +4,12 @@
     "output_dir": "../trained_models/",
     "checkpoint_path": "-1",
 
-    "data_folder": "../data/classification_2dot_5classes_train_10000seqs_20_per_seq/",
-    "test_data_folder": "../data/classification_5dot_5classes_train_500seqs_20_per_seq/",
-    "test_data_folder_2": "../data/classification_14mnist_5classes_train_500seqs_20_per_seq/",
+    "data_folder": "../data/classification_2dot__bg0_5classes_5000seqs_20_per_seq/",
+    "test_data_folder": "../data/classification_5dot__bg0_5classes_500seqs_20_per_seq/",
+    "test_data_folder_2": "../data/classification_14mnist_test_bg0_5classes_500seqs_20_per_seq/",
+    "test_data_folder_3": "../data/classification_14mnist_test_bg1_5classes_500seqs_20_per_seq/",
 
-    "nb_train_samples": 9000,
+    "nb_train_samples": 4000,
     "nb_val_samples": 1000,
 
     "num_workers": 128,
@@ -17,7 +18,7 @@
     "clip_size": 20,
     "nb_labels": 5,
 
-    "hidden_per_layer": [8, 8, 8],
+    "hidden_per_layer": [48, 48, 48],
     "kernel_size_per_layer": [3, 3, 3],
     "conv_stride": 1,
     "pooling": ["max", "max", "max"],

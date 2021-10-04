@@ -107,10 +107,10 @@ class Conv3dBlock(nn.Module):
 
 if __name__ == "__main__":
     input_tensor = torch.autograd.Variable(torch.rand(64, 1, 20, 64, 64))
-    model = VGGStyle3DCNN(input_channels=1, hidden_per_layer=[ 5, 5, 5, 5, 5, 5, 5, 5],
-        kernel_size_per_layer=[3, 3, 3, 3, 3, 3, 3, 3],
+    model = VGGStyle3DCNN(input_channels=1, hidden_per_layer=[ 5, 5, 5, 5],
+        kernel_size_per_layer=[3, 3, 3, 3],
         conv_stride=1,
-        pooling=["max", "max", "max", "max", "max", "max", "max", "max"],
+        pooling=["max", "max", "max", "max"],
         dropout=0
         )
     output = model(input_tensor)

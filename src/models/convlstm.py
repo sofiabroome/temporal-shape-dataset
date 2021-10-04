@@ -205,7 +205,7 @@ if __name__ == '__main__':
 
     model = StackedConvLSTMModel(input_channels=1, hidden_per_layer=[3, 3, 3],
                                  return_sequence=False, kernel_size_per_layer=[3, 3, 3],
-                                 conv_stride=1, if_not_sequence='two_last')
+                                 conv_stride=1, if_not_sequence='last')
     output_list = model(torch.rand(64, 20, 1, 64, 64))
 
     print('\n Output size:')
