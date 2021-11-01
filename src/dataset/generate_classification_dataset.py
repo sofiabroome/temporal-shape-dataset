@@ -82,11 +82,11 @@ def generate_rectangle(speed, time_steps):
     return velocities
 
 
-def generate_textured_background(canvas, octaves):
+def generate_textured_background(canvas, octaves, perlin_intensity):
     noise = PerlinNoise(octaves=octaves)
     xpix = canvas.shape[1]
     ypix = canvas.shape[2]
-    canvas_with_perlin_background = [[noise([i/xpix, j/ypix]) for j in range(xpix)] for i in range(ypix)]
+    canvas_with_perlin_background = [[perlin_intensity * noise([i/xpix, j/ypix]) for j in range(xpix)] for i in range(ypix)]
     return np.asarray(canvas_with_perlin_background).reshape(1, xpix, ypix)
 
 
@@ -98,7 +98,7 @@ def get_starting_point_limits(image_size, symbol_width, max_radius):
 
 def generate_temporal_shape_dataset(training, shape, num_frames, num_sequences,
                                     symbol_size, nums_per_image, object_mode,
-                                    textured_background, save_gifs=True):
+                                    textured_background, perlin_intensity, save_gifs=True):
     """
     Args:
         training: Boolean, used to decide if downloading/generating train set or test set
@@ -198,7 +198,7 @@ def generate_temporal_shape_dataset(training, shape, num_frames, num_sequences,
             canvas = np.zeros((1, width, height), dtype=np.float32)
 
             if textured_background:
-                canvas = generate_textured_background(canvas, octaves=octaves)
+                canvas = generate_textured_background(canvas, octaves=octaves, perlin_intensity=perlin_intensity)
 
             for i, canv in enumerate(canvases):
                 # In canv (an Image object), place the image at the respective positions
@@ -261,12 +261,13 @@ def generate_temporal_shape_dataset(training, shape, num_frames, num_sequences,
 
 def main(training, dest, frame_size, num_frames, num_sequences,
          symbol_size, nums_per_image, object_mode,
-         textured_background, save_gifs=True):
+         textured_background, perlin_intensity, save_gifs=True):
     labels_df = generate_temporal_shape_dataset(
         training, shape=(frame_size, frame_size), num_frames=num_frames,
         num_sequences=num_sequences, symbol_size=symbol_size,
         nums_per_image=nums_per_image, object_mode=object_mode,
-        textured_background=textured_background, save_gifs=save_gifs)
+        textured_background=textured_background, perlin_intensity=perlin_intensity,
+        save_gifs=save_gifs)
     labels_df.to_csv(os.path.join(dest, 'labels.csv'))
 
 
@@ -280,12 +281,14 @@ if __name__ == '__main__':
     parser.add_argument("--symbol-size")
     parser.add_argument("--train-test-mnist")
     parser.add_argument("--textured-background")
+    parser.add_argument("--perlin-intensity")
     args = parser.parse_args()
 
     num_sequences = int(args.num_sequences)
     object_mode = args.object_mode
     symbol_size = int(args.symbol_size)
     textured_background = int(args.textured_background)
+    perlin_intensity = float(args.perlin_intensity)
 
     if object_mode == 'mnist':
         train_test_mnist = args.train_test_mnist
@@ -294,11 +297,12 @@ if __name__ == '__main__':
 
     train = True if train_test_mnist == 'train' else False
 
-    dest = f'../../data/classification_{symbol_size}{object_mode}_{train_test_mnist}_bg{textured_background}_{num_classes}classes_{num_sequences}seqs_{num_frames}_per_seq/'
+    dest = f'../../data/classification_{symbol_size}{object_mode}_{train_test_mnist}_bg{textured_background}_perlintens{perlin_intensity}_{num_classes}classes_{num_sequences}seqs_{num_frames}_per_seq/'
 
     if not os.path.isdir(dest):
         os.mkdir(dest)
 
     main(frame_size=64, nums_per_image=1, training=train, dest=dest, num_frames=num_frames, num_sequences=num_sequences,
-         object_mode=object_mode, symbol_size=symbol_size, textured_background=textured_background, save_gifs=True)
+         object_mode=object_mode, symbol_size=symbol_size, textured_background=textured_background, perlin_intensity=perlin_intensity,
+         save_gifs=True)
 
