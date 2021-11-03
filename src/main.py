@@ -103,8 +103,13 @@ def main():
     test_dm_3 = TemporalShapeDataModule(data_dir=config['test_data_folder_3'], config=config, seq_first=model.seq_first)
 
     if config['inference_from_checkpoint_only']:
-        model_from_checkpoint = ConvLSTMModule.load_from_checkpoint(config['ckpt_path'])
+        if config['model_name'] == 'lit_convlstm':
+            model_from_checkpoint = ConvLSTMModule.load_from_checkpoint(config['checkpoint_path'])
+        if config['model_name'] == 'lit_3dconv':
+            model_from_checkpoint = ThreeDCNNModule.load_from_checkpoint(config['checkpoint_path'])
         trainer.test(datamodule=test_dm, model=model_from_checkpoint)
+        trainer.test(datamodule=test_dm_2, model=model_from_checkpoint)
+        trainer.test(datamodule=test_dm_3, model=model_from_checkpoint)
 
     else:
         train_dm = TemporalShapeDataModule(data_dir=config['data_folder'], config=config, seq_first=model.seq_first)
