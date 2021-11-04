@@ -1,0 +1,40 @@
+{
+    "inference_from_checkpoint_only": 0,
+    "model_name": "lit_3dconv",
+    "output_dir": "../trained_models/",
+    "checkpoint_path": "-1",
+
+    "data_folder": "../data/classification_14mnist_train_bg1_perlintens0.5_5classes_5000seqs_20_per_seq/",
+    "test_data_folder": "../data/classification_14mnist_test_bg0_5classes_500seqs_20_per_seq/",
+    "test_data_folder_2": "../data/classification_5dot__bg0_5classes_500seqs_20_per_seq/",
+    "test_data_folder_3": "../data/classification_2dot__bg0_5classes_500seqs_20_per_seq/",
+
+    "nb_train_samples": 4000,
+    "nb_val_samples": 1000,
+
+    "num_workers": 128,
+
+    "batch_size": 64,
+    "clip_size": 20,
+    "nb_labels": 5,
+
+    "hidden_per_layer": [48, 48, 48],
+    "kernel_size_per_layer": [3, 3, 3],
+    "conv_stride": 1,
+    "pooling": ["max", "max", "max"],
+
+    "optimizer": "SGD",
+    "lr": 0.001,
+    "reduce_lr": 0,
+    "last_lr": 0.00001,
+    "momentum": 0.9,
+    "num_epochs": 100,
+
+    "early_stopping_patience": 10,
+    "weight_decay": 0.00001,
+
+    "dropout_encoder": 0,
+    "dropout_classifier": 0,
+
+    "input_spatial_size": 64
+}
