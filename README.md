@@ -41,3 +41,5 @@ You also will want a wandb-account to keep track of your experiments.
 
 ### Test run to train on existing data
 `cd src/; python main.py --config configs/convlstm.json --job_identifier test --fast_dev_run=True --log_every_n_steps=5 --gpus=1`
+
+or, if running on a Slurm cluster, use the provided `.sbatch`-file under `run_scripts`.
