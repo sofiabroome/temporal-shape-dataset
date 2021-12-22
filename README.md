@@ -1,5 +1,14 @@
 # temporal-shape-dataset
-A simpler action template dataset, to evaluate temporal modeling abilities and cross-domain robustness.
+This repository contains code for the Temporal Shape dataset, presented in "Recur, Attend or Convolve? Frame Dependency Modeling Matters for Cross-Domain Robustness in Action Recognition" by Broomé et al., arXiv 2021, with the purpose to evaluate principal temporal modeling abilities and cross-domain robustness in a light-weight manner.
+
+
+### Gifs corresponding to Fig. 1 in the article
+
+|       2Dot                |    5Dot  |    MNIST    |    MNIST-bg   | 
+| --------------------- |:---------:|:---------:|:---------:|
+| ![](assets/2dot_1240.gif)  | ![](assets/5dot_1700.gif) | ![](assets/mnist_140.gif)  | ![](assets/mnist_1500.gif) | 
+
+
 
 ## Setting up
 
