@@ -2,7 +2,7 @@
 This repository contains code for the Temporal Shape dataset, presented in "Recur, Attend or Convolve? Frame Dependency Modeling Matters for Cross-Domain Robustness in Action Recognition" by Broomé et al., arXiv 2021, with the purpose to evaluate principal temporal modeling abilities and cross-domain robustness in a light-weight manner.
 
 
-### Gifs corresponding to Fig. 1 in the article
+### Gifs corresponding to Fig. 1 in the article (circle class in the 4 different domains)
 
 |       2Dot                |    5Dot  |    MNIST    |    MNIST-bg   | 
 | --------------------- |:---------:|:---------:|:---------:|
