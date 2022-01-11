@@ -1,5 +1,7 @@
 # temporal-shape-dataset
-This repository contains code for the Temporal Shape dataset, presented in "Recur, Attend or Convolve? Frame Dependency Modeling Matters for Cross-Domain Robustness in Action Recognition" by Broomé et al., arXiv 2021, with the purpose to evaluate principal temporal modeling abilities and cross-domain robustness in a light-weight manner.
+This repository contains code for the Temporal Shape dataset, presented in "Recur, Attend or Convolve? Frame Dependency Modeling Matters for Cross-Domain Robustness in Action Recognition" by Broomé et al., arXiv 2112.12175, with the purpose to evaluate principal temporal modeling abilities and cross-domain robustness in a light-weight manner.
+
+You can download the Temporal Shape dataset on [this page](https://doi.org/10.7910/DVN/EDVAIY) on Harvard Dataverse. 
 
 
 ### Gifs corresponding to Fig. 1 in the article (circle class in the 4 different domains)
@@ -46,6 +48,9 @@ You also will want a wandb-account to keep track of your experiments.
 `pip install wandb`
 
 ### Generate dataset
+
+If you want to try to generate your own data, the below is an example command. Otherwise, see this [link](https://doi.org/10.7910/DVN/EDVAIY) for download of the dataset used in the article.
+
 `cd src/dataset/; python generate_classification_dataset.py --num-sequences 10 --object-mode dot --symbol-size 2 --textured-background 0`
 
 ### Test run to train on existing data
