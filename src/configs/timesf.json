@@ -18,15 +18,14 @@
     "clip_size": 20,
     "nb_labels": 5,
 
-    "hidden_per_layer": [3, 3, 3],
+    "num_layers": 3,
 
-    "dim": 64,
+    "dim_head": 2,
+    "num_heads": 8,
+
     "patch_size": 16,
     "attn_dropout": 0.1,
     "ff_dropout": 0.1,
-    "depth": 3,
-    "heads": 8,
-    "dim_head": 64,
 
     "optimizer": "SGD",
     "lr": 0.001,

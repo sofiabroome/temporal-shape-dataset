@@ -69,15 +69,13 @@ def main():
     if config['model_name'] == 'lit_timesformer':
         model = TimeSformerModule(input_size=(config['batch_size'], config['clip_size'], 1,
                                 config['input_spatial_size'], config['input_spatial_size']),
+                                dim_head=config['dim_head'], patch_size=config['patch_size'],
+                                num_heads=config['num_heads'],
+                                num_layers=config['num_layers'],
                                 optimizer=config['optimizer'],
-                                hidden_per_layer=config['hidden_per_layer'],
                                 nb_labels=config['nb_labels'],
                                 lr=config['lr'], reduce_lr=config['reduce_lr'],
-
-                                dim=config['dim'], patch_size=config['patch_size'], num_frames=config['input_spatial_size'],
-                                attn_dropout=config['attn_dropout'], ff_dropout=config['ff_dropout'], depth=config['depth'],
-                                heads=config['heads'], dim_head=config['dim_head'],
-
+                                attn_dropout=config['attn_dropout'], ff_dropout=config['ff_dropout'],
                                 momentum=config['momentum'], weight_decay=config['weight_decay'],
                                 dropout_classifier=config['dropout_classifier'])
 
