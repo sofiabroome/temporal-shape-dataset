@@ -12,7 +12,7 @@ from dataset.lit_data_module import TemporalShapeDataModule
 from models.model_utils import count_parameters
 from lit_convlstm import ConvLSTMModule
 from lit_3dconv import ThreeDCNNModule
-from lit_transformer import TransformerModule
+from lit_timesformer import TimeSformerModule
 
 
 def main():
@@ -66,8 +66,8 @@ def main():
                                 dropout_classifier=config['dropout_classifier'])
 
 
-    if config['model_name'] == 'lit_transformer':
-        model = TransformerModule(input_size=(config['batch_size'], config['clip_size'], 1,
+    if config['model_name'] == 'lit_timesformer':
+        model = TimeSformerModule(input_size=(config['batch_size'], config['clip_size'], 1,
                                 config['input_spatial_size'], config['input_spatial_size']),
                                 optimizer=config['optimizer'],
                                 hidden_per_layer=config['hidden_per_layer'],

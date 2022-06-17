@@ -9,7 +9,7 @@ from torch import nn
 import torchmetrics
 import torch
 
-class TransformerModule(ConvLSTMModule):
+class TimeSformerModule(ConvLSTMModule):
     def __init__(self, input_size, optimizer, hidden_per_layer, nb_labels, 
                  lr, reduce_lr, dim, patch_size, num_frames, attn_dropout, ff_dropout,
                  depth, heads, dim_head, momentum, weight_decay, dropout_classifier):
@@ -36,7 +36,7 @@ class TransformerModule(ConvLSTMModule):
         self.attn_dropout = attn_dropout
         self.ff_dropout = ff_dropout
 
-        self.transformer_encoder = TimeSformer(
+        self.timesformer_encoder = TimeSformer(
                 dim = self.dim,  #?
                 image_size = self.w if self.w <= self.h else self.h,  # NOTE: TimeSformer accepts square images
                 patch_size = self.patch_size,
@@ -57,7 +57,7 @@ class TransformerModule(ConvLSTMModule):
         #TimeSformer(dim = 64,image_size = 64, patch_size = 16, num_frames = 20, channels=1, num_classes = 5, depth = 3, heads = 8, dim_head =  64, attn_dropout = 0.1, ff_dropout = 0.1 )(sample_input)
 
         sample_input = torch.autograd.Variable(torch.rand(1, self.t, self.c, self.h, self.w)) 
-        sample_output = self.transformer_encoder(sample_input)
+        sample_output = self.timesformer_encoder(sample_input)
         self.encoder_out_dim = torch.prod(torch.tensor(sample_output.shape[1:]))
 
         self.linear = nn.Linear(
@@ -72,7 +72,7 @@ class TransformerModule(ConvLSTMModule):
         self.save_hyperparameters()
 
     def forward(self, x) -> torch.Tensor:
-        x = self.transformer_encoder(x)
+        x = self.timesformer_encoder(x)
         x = self.flatten(x)
         x = self.dropout(x)
         x = self.linear(x)
