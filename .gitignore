@@ -9,6 +9,9 @@ __pycache__/
 # Data
 data/
 
+# Plots and code for visualization
+src/plots/
+
 # Trained models
 trained_models/
 
