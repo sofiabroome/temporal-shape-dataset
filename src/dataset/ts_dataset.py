@@ -4,8 +4,6 @@ import pandas as pd
 from PIL import Image
 import torchvision as tv
 
-FRAMERATE = 1  # default value
-
 
 class TemporalShapeDataset(torch.utils.data.Dataset):
 
