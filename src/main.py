@@ -30,6 +30,11 @@ def main(parser, hidden_units=None, config_path=None, seed=None, first_experimen
         config['dim_head'] = hidden_units
         config['hidden_per_layer'] = [hidden_units, hidden_units, hidden_units]
 
+    if hasattr(args, 'results_persist'):
+        job_identifier = config['model_name'] + '_h' + str(hidden_units) + '_seed' + str(seed)
+    else:
+        job_identifier = args.job_identifier
+
     if not seed:
         seed = 42
 
@@ -102,7 +107,7 @@ def main(parser, hidden_units=None, config_path=None, seed=None, first_experimen
         args, max_epochs=config['num_epochs'],
         progress_bar_refresh_rate=1,
         callbacks=callbacks,
-        weights_save_path=os.path.join(config['output_dir'], args.job_identifier),
+        weights_save_path=os.path.join(config['output_dir'], job_identifier),
         logger=wandb_logger,
         plugins=DDPPlugin(find_unused_parameters=False))
 
