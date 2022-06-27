@@ -119,7 +119,6 @@ class ConvLSTMModule(pl.LightningModule):
         top5_acc = self.top5_accuracy(self.softmax(y_hat), y)
         return loss, acc, top5_acc
 
-
     def configure_optimizers(self):
         if self.optimizer == 'SGD':
             optimizer = torch.optim.SGD(

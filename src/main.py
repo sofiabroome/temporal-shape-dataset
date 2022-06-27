@@ -15,27 +15,26 @@ from lit_3dconv import ThreeDCNNModule
 from lit_timesformer import TimeSformerModule
 
 
-def main():
-    # load configurations
+def main(parser, hidden_units=None, config_path=None, seed=None):
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', '-c', help='json config file path')
-    parser.add_argument('--eval_only', '-e', action='store_true',
-                        help="evaluate trained model on validation data.")
-    parser.add_argument('--resume', '-r', action='store_true',
-                        help="resume training from a given checkpoint.")
-    parser.add_argument('--test_run', action='store_true',
-                        help="quick test run")
-    parser.add_argument('--job_identifier', '-j', help='Unique identifier for run,'
-                                                       'avoids overwriting model.')
     parser = pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()
 
-    config = utils.load_json_config(args.config)
+    if config_path:
+        config = utils.load_json_config(config_path)
+    else:
+        config = utils.load_json_config(args.config)
+
+    if hidden_units:
+        config['dim_head'] = hidden_units
+        config['hidden_per_layer'] = [hidden_units, hidden_units, hidden_units]
+
+    if not seed:
+        seed = 42
 
     wandb_logger = WandbLogger(project='temporal-shape', config=config)
 
-    seed_everything(42, workers=True)
+    seed_everything(seed, workers=True)
 
     if config['model_name'] == 'lit_convlstm':
         model = ConvLSTMModule(input_size=(config['batch_size'], config['clip_size'], 1,
@@ -65,7 +64,6 @@ def main():
                                 momentum=config['momentum'], weight_decay=config['weight_decay'],
                                 dropout_classifier=config['dropout_classifier'])
 
-
     if config['model_name'] == 'lit_timesformer':
         model = TimeSformerModule(input_size=(config['batch_size'], config['clip_size'], 1,
                                 config['input_spatial_size'], config['input_spatial_size']),
@@ -78,7 +76,6 @@ def main():
                                 attn_dropout=config['attn_dropout'], ff_dropout=config['ff_dropout'],
                                 momentum=config['momentum'], weight_decay=config['weight_decay'],
                                 dropout_classifier=config['dropout_classifier'])
-
 
     config['nb_encoder_params'], config['nb_trainable_params'] = count_parameters(model)
     print('\n Nb encoder params: ', config['nb_encoder_params'], 'Nb params total: ', config['nb_trainable_params'])
@@ -117,6 +114,8 @@ def main():
     test_dm_2 = TemporalShapeDataModule(data_dir=config['test_data_folder_2'], config=config, seq_first=model.seq_first)
     test_dm_3 = TemporalShapeDataModule(data_dir=config['test_data_folder_3'], config=config, seq_first=model.seq_first)
 
+    test_accuracies = []
+
     if config['inference_from_checkpoint_only']:
         if config['model_name'] == 'lit_convlstm':
             model_from_checkpoint = ConvLSTMModule.load_from_checkpoint(config['checkpoint_path'])
@@ -129,10 +128,35 @@ def main():
     else:
         train_dm = TemporalShapeDataModule(data_dir=config['data_folder'], config=config, seq_first=model.seq_first)
         trainer.fit(model, train_dm)
-        wandb_logger.log_metrics({'best_val_acc': trainer.checkpoint_callback.best_model_score})
+
+        best_val_acc = trainer.checkpoint_callback.best_model_score
+        wandb_logger.log_metrics({'best_val_acc': best_val_acc})
+        test_accuracies.append(best_val_acc)
+
         trainer.test(datamodule=test_dm)
+        test_accuracies.append(trainer.callback_metrics['test_acc'])
+
         trainer.test(datamodule=test_dm_2)
+        test_accuracies.append(trainer.callback_metrics['test_acc'])
+
         trainer.test(datamodule=test_dm_3)
+        test_accuracies.append(trainer.callback_metrics['test_acc'])
+
+    if hasattr(args, 'results_persist'):
+        return test_accuracies
+
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    # load configurations
+    parser.add_argument('--config', '-c', help='json config file path')
+    parser.add_argument('--eval_only', '-e', action='store_true',
+                        help="evaluate trained model on validation data.")
+    parser.add_argument('--resume', '-r', action='store_true',
+                        help="resume training from a given checkpoint.")
+    parser.add_argument('--test_run', action='store_true',
+                        help="quick test run")
+    parser.add_argument('--job_identifier', '-j', help='Unique identifier for run,'
+                                                       'avoids overwriting model.')
+
+    main(parser)
