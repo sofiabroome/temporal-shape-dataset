@@ -15,9 +15,10 @@ from lit_3dconv import ThreeDCNNModule
 from lit_timesformer import TimeSformerModule
 
 
-def main(parser, hidden_units=None, config_path=None, seed=None):
+def main(parser, hidden_units=None, config_path=None, seed=None, first_experiment=True):
 
-    parser = pl.Trainer.add_argparse_args(parser)
+    if first_experiment:
+        parser = pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()
 
     if config_path:
