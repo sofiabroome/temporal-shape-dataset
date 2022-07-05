@@ -4,11 +4,14 @@ import argparse
 import main
 
 
-h_values = [2, 4]
+# h_values = [2, 4]
+# h_values = [2, 4]
 # h_values = [2, 4, 6, 8, 10, 12, 16, 24, 32, 48]
+# h_values = [10, 12, 16, 24, 32, 48]
+h_values = [16, 24, 32, 48]
 
-seeds = [42, 61]
-# seeds = [42, 61, 47, 53, 57]
+# seeds = [42, 61]
+seeds = [42, 61, 47, 53, 57]
 
 parser = argparse.ArgumentParser()
 
@@ -62,7 +65,7 @@ for h in h_values:
                                              seed=seed,
                                              first_experiment=first_experiment)
         first_experiment = False
-        test_accuracies_one_seed = [round(float(elt), 4) for elt in test_accuracies_one_seed]
+        test_accuracies_one_seed = [round(float(elt), 6) for elt in test_accuracies_one_seed]
         test_accuracies.append(test_accuracies_one_seed)
 
     # Write the 4x5 table to the .csv for this specific seed and #hidden units
