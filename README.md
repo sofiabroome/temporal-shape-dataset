@@ -1,5 +1,5 @@
 # temporal-shape-dataset
-This repository contains code for the Temporal Shape dataset, presented in ["Recur, Attend or Convolve? Frame Dependency Modeling Matters for Cross-Domain Robustness in Action Recognition" by Broomé et al., arXiv 2112.12175](https://arxiv.org/abs/2112.12175), with the purpose to evaluate principal temporal modeling abilities and cross-domain robustness in a light-weight manner.
+This repository contains code for the Temporal Shape dataset, presented in [Recur, Attend or Convolve? Frame Dependency Modeling Matters for Cross-Domain Robustness in Action Recognition](https://arxiv.org/abs/2112.12175) by Broomé et al., arXiv 2112.12175, with the purpose to evaluate principal temporal modeling abilities and cross-domain robustness in a light-weight manner.
 
 Please cite our paper if you found this code or dataset useful for your work.
 
