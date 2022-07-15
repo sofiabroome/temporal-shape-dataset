@@ -9,7 +9,7 @@ Please cite our paper if you found this code or dataset useful for your work.
       author={Sofia Broomé and Ernest Pokropek and Boyu Li and Hedvig Kjellström},
       journal={arXiv preprint arXiv:2112.12175},
       year={2021}
-} ```
+}
 
 You can download the Temporal Shape dataset on [this page](https://doi.org/10.7910/DVN/EDVAIY) on Harvard Dataverse. 
 
