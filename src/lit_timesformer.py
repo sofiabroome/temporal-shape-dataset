@@ -12,7 +12,7 @@ import torch
 class TimeSformerModule(ConvLSTMModule):
     def __init__(self, input_size, dim_head, num_heads, patch_size, num_layers,  
                  nb_labels, lr, reduce_lr,  attn_dropout, ff_dropout,
-                 optimizer, momentum, weight_decay, dropout_classifier):
+                 optimizer, momentum, weight_decay):
                  
         super(ConvLSTMModule, self).__init__()
 
@@ -49,17 +49,6 @@ class TimeSformerModule(ConvLSTMModule):
                 channels=self.c
             )
 
-        self.flatten = nn.Flatten(start_dim=1, end_dim=-1)
-        self.dropout = nn.Dropout(p=dropout_classifier)
-
-        sample_input = torch.autograd.Variable(torch.rand(1, self.t, self.c, self.h, self.w)) 
-        sample_output = self.timesformer_encoder(sample_input)
-        self.encoder_out_dim = torch.prod(torch.tensor(sample_output.shape[1:]))
-
-        self.linear = nn.Linear(
-            in_features=self.encoder_out_dim,
-            out_features=self.out_features)
-
         self.softmax = nn.Softmax(dim=1)
 
         self.accuracy = torchmetrics.Accuracy()
@@ -69,8 +58,5 @@ class TimeSformerModule(ConvLSTMModule):
 
     def forward(self, x) -> torch.Tensor:
         x = self.timesformer_encoder(x)
-        x = self.flatten(x)
-        x = self.dropout(x)
-        x = self.linear(x)
         return x
 

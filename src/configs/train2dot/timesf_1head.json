@@ -1,8 +1,8 @@
 {
     "inference_from_checkpoint_only": 0,
-    "model_name": "lit_convlstm",
+    "model_name": "lit_timesformer",
     "output_dir": "../trained_models/",
-    "ckpt_path": "../trained_models/48432/temporal-shape/oq8i6bx4/checkpoints/epoch=99-val_loss=0.38-val_acc=0.8740.ckpt",
+    "checkpoint_path": "-1",
 
     "data_folder": "../data/classification_2dot__bg0_5classes_5000seqs_20_per_seq/",
     "test_data_folder": "../data/classification_5dot__bg0_5classes_500seqs_20_per_seq/",
@@ -18,23 +18,24 @@
     "clip_size": 20,
     "nb_labels": 5,
 
-    "hidden_per_layer": [2, 2, 2],
-    "kernel_size_per_layer": [3, 3, 3],
-    "conv_stride": 1,
-    "return_sequence": 0,
-    "if_not_sequence": "last",
+    "num_layers": 3,
+
+    "dim_head": 2,
+    "num_heads": 1,
+
+    "patch_size": 16,
+    "attn_dropout": 0,
+    "ff_dropout": 0,
 
     "optimizer": "SGD",
     "lr": 0.001,
     "reduce_lr": 0,
     "last_lr": 0.00001,
     "momentum": 0.9,
-    "num_epochs": 100,
+    "num_epochs": 300,
 
-    "early_stopping_patience": 10,
+    "early_stopping_patience": 100,
     "weight_decay": 0.00001,
-    
-    "dropout_classifier": 0,
 
     "input_spatial_size": 64
 }

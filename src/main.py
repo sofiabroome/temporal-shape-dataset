@@ -32,6 +32,11 @@ def main(parser, hidden_units=None, config_path=None, seed=None, first_experimen
 
     if hasattr(args, 'results_persist'):
         job_identifier = config['model_name'] + '_h' + str(hidden_units) + '_seed' + str(seed)
+        args.gpus = 1
+        args.precision = 16
+        args.log_every_n_steps = 5
+
+        
     else:
         job_identifier = args.job_identifier
 
@@ -80,8 +85,7 @@ def main(parser, hidden_units=None, config_path=None, seed=None, first_experimen
                                 nb_labels=config['nb_labels'],
                                 lr=config['lr'], reduce_lr=config['reduce_lr'],
                                 attn_dropout=config['attn_dropout'], ff_dropout=config['ff_dropout'],
-                                momentum=config['momentum'], weight_decay=config['weight_decay'],
-                                dropout_classifier=config['dropout_classifier'])
+                                momentum=config['momentum'], weight_decay=config['weight_decay'])
 
     config['nb_encoder_params'], config['nb_trainable_params'] = count_parameters(model)
     print('\n Nb encoder params: ', config['nb_encoder_params'], 'Nb params total: ', config['nb_trainable_params'])
@@ -137,16 +141,16 @@ def main(parser, hidden_units=None, config_path=None, seed=None, first_experimen
 
         best_val_acc = trainer.checkpoint_callback.best_model_score
         wandb_logger.log_metrics({'best_val_acc': best_val_acc})
-        test_accuracies.append(best_val_acc)
+        test_accuracies.append(best_val_acc.cpu().detach().numpy())
 
         trainer.test(datamodule=test_dm)
-        test_accuracies.append(trainer.callback_metrics['test_acc'])
+        test_accuracies.append(trainer.callback_metrics['test_acc'].cpu().detach().numpy())
 
         trainer.test(datamodule=test_dm_2)
-        test_accuracies.append(trainer.callback_metrics['test_acc'])
+        test_accuracies.append(trainer.callback_metrics['test_acc'].cpu().detach().numpy())
 
         trainer.test(datamodule=test_dm_3)
-        test_accuracies.append(trainer.callback_metrics['test_acc'])
+        test_accuracies.append(trainer.callback_metrics['test_acc'].cpu().detach().numpy())
 
     if hasattr(args, 'results_persist'):
         return test_accuracies

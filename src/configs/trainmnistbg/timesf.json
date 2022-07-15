@@ -4,10 +4,10 @@
     "output_dir": "../trained_models/",
     "checkpoint_path": "-1",
 
-    "data_folder": "../data/classification_2dot__bg0_5classes_5000seqs_20_per_seq/",
-    "test_data_folder": "../data/classification_5dot__bg0_5classes_500seqs_20_per_seq/",
-    "test_data_folder_2": "../data/classification_14mnist_test_bg0_5classes_500seqs_20_per_seq/",
-    "test_data_folder_3": "../data/classification_14mnist_test_bg1_5classes_500seqs_20_per_seq/",
+    "data_folder": "../data/classification_14mnist_train_bg1_perlintens0.5_5classes_5000seqs_20_per_seq/",
+    "test_data_folder": "../data/classification_14mnist_test_bg0_5classes_500seqs_20_per_seq/",
+    "test_data_folder_2": "../data/classification_5dot__bg0_5classes_500seqs_20_per_seq/",
+    "test_data_folder_3": "../data/classification_2dot__bg0_5classes_500seqs_20_per_seq/",
 
     "nb_train_samples": 4000,
     "nb_val_samples": 1000,
