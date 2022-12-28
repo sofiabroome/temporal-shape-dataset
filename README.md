@@ -7,7 +7,7 @@ Please cite our paper if you found this code or dataset useful for your work.
 @article{broome2021recur,
       title={{Recur, Attend or Convolve? On Whether Frame Dependency Modeling Matters for Cross-Domain Robustness in Action Recognition}}, 
       author={Sofia Broomé and Ernest Pokropek and Boyu Li and Hedvig Kjellström},
-      booktitle = {The IEEE Winter Conference on Applications in Computer Vision (WACV)},
+      booktitle = {IEEE Winter Conference on Applications in Computer Vision (WACV)},
       month = {January}, 
       year={2023}
 }
